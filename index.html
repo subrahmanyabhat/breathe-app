@@ -92,12 +92,26 @@ const TECHNIQUES=[
   {id:'energize',name:'energize',tag:'6·2',    accent:'#e8a23c',tagBg:'rgba(232,162,60,0.12)', bg:'linear-gradient(145deg,#281600,#3c2000)',desc:'Floods the brain with oxygen for instant clarity.',      phases:[{l:'Inhale',d:6},{l:'Exhale',d:2}]},
 ];
 const APPS=[
-  {id:'instagram',name:'instagram',initials:'in',color:'#d63e74',limit:30},
-  {id:'tiktok',   name:'tiktok',   initials:'tt',color:'#222',   limit:30},
-  {id:'youtube',  name:'youtube',  initials:'yt',color:'#cc2200',limit:60},
-  {id:'twitter',  name:'x',        initials:'x', color:'#1a8cd8',limit:30},
+  {id:'instagram',name:'instagram',initials:'in',color:'#d63e74',limit:30,scheme:'instagram://app',url:'https://www.instagram.com'},
+  {id:'tiktok',   name:'tiktok',   initials:'tt',color:'#222',   limit:30,scheme:'snssdk1128://',  url:'https://www.tiktok.com'},
+  {id:'youtube',  name:'youtube',  initials:'yt',color:'#cc2200',limit:60,scheme:'youtube://',     url:'https://www.youtube.com'},
+  {id:'twitter',  name:'x',        initials:'x', color:'#1a8cd8',limit:30,scheme:'twitter://timeline',url:'https://x.com'},
 ];
 const LIMIT_STEPS=[5,10,15,20,30,45,60,90,120];
+
+// ── Device helpers ────────────────────────────────────────────────────────────
+function openApp(app){
+  // try deep link; if app not installed, falls through to web after 800ms
+  const t=Date.now();
+  window.location.href=app.scheme;
+  setTimeout(()=>{ if(Date.now()-t<1500) window.open(app.url,'_blank'); },800);
+}
+function openScreenTimeSettings(){
+  const ua=navigator.userAgent;
+  if(/iPhone|iPad|iPod/.test(ua)) window.location.href='App-Prefs:root=SCREENTIME';
+  else if(/Android/.test(ua)) window.location.href='intent:#Intent;action=android.settings.DIGITAL_WELLBEING;end';
+  else window.open('https://support.apple.com/en-us/HT208982','_blank');
+}
 
 // ── Audio ─────────────────────────────────────────────────────────────────────
 let _ctx=null,_ag=null,_ao=[];
@@ -266,10 +280,62 @@ function SessionScreen({th,tech,onDone,onBack,sound}){
   </div>;
 }
 
+// ── BreatheToUnlock sheet ─────────────────────────────────────────────────────
+function BreatheToUnlockSheet({th,app,selTech,onSelTech,onStartSession,onClose}){
+  const cycleSeconds=selTech.phases.reduce((s,p)=>s+p.d,0);
+  const earnPerCycle=Math.round(cycleSeconds*10/60);
+  return<div style={{position:'fixed',inset:0,background:th.overlay,display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:800,animation:'overlayIn 0.22s ease'}} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'430px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'28px 28px 0 0',padding:'28px 24px 48px',animation:'slideUp 0.36s cubic-bezier(0.4,0,0.2,1)',border:`1px solid ${th.border}`,borderBottom:'none'}}>
+      <div style={{width:'40px',height:'4px',borderRadius:'2px',background:th.text4,margin:'0 auto 22px'}}/>
+
+      {/* App info */}
+      <div style={{display:'flex',alignItems:'center',gap:'14px',marginBottom:'20px'}}>
+        <div style={{width:'48px',height:'48px',borderRadius:'13px',background:app.color,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <span style={{color:'rgba(255,255,255,0.92)',fontSize:'14px',fontWeight:700}}>{app.initials}</span>
+        </div>
+        <div>
+          <p style={{color:th.text,fontSize:'17px',fontWeight:600}}>{app.name}</p>
+          <p style={{color:th.sealed,fontSize:'13px'}}>sealed · breathe to unlock</p>
+        </div>
+      </div>
+
+      <p style={{color:th.text2,fontSize:'13px',lineHeight:1.6,marginBottom:'20px'}}>
+        {app.name} is locked. complete a breathing session to earn screentime and open it.
+      </p>
+
+      {/* Technique selector */}
+      <p style={{color:th.label,fontSize:'9px',letterSpacing:'0.14em',textTransform:'uppercase',marginBottom:'10px'}}>CHOOSE TECHNIQUE</p>
+      <div className="scroll-x" style={{display:'flex',gap:'8px',marginBottom:'20px',paddingBottom:'2px'}}>
+        {TECHNIQUES.map(t=>{
+          const active=selTech.id===t.id;
+          return<button key={t.id} className="tech-chip" onClick={()=>onSelTech(t)} style={{flexShrink:0,background:active?t.accent:th.text4,border:`1px solid ${active?t.accent:th.border}`,borderRadius:'20px',padding:'7px 14px',color:active?'#07111e':th.text2,fontSize:'13px',fontWeight:active?600:400,whiteSpace:'nowrap'}}>
+            {t.name}<span style={{opacity:0.6,fontSize:'11px',marginLeft:'4px'}}>{t.tag}</span>
+          </button>;
+        })}
+      </div>
+
+      {/* Earn preview */}
+      <div style={{background:th.text4,border:`1px solid ${th.border}`,borderRadius:'12px',padding:'12px 14px',marginBottom:'18px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <p style={{color:th.text2,fontSize:'13px'}}>{selTech.name} · {selTech.phases.map(p=>p.d).join('·')}</p>
+        <p style={{color:th.teal,fontSize:'13px',fontWeight:600}}>+{earnPerCycle}m / cycle</p>
+      </div>
+
+      {/* CTA */}
+      <button className="btn-p" onClick={()=>onStartSession(selTech,app.id)} style={{width:'100%',background:th.teal,color:'#07111e',border:'none',borderRadius:'13px',padding:'16px',fontSize:'15px',fontWeight:700,marginBottom:'10px'}}>
+        breathe to unlock {app.name}
+      </button>
+      <button className="btn-s" onClick={openScreenTimeSettings} style={{width:'100%',background:th.text4,border:`1px solid ${th.border}`,borderRadius:'13px',padding:'13px',fontSize:'13px',color:th.text2,cursor:'pointer'}}>
+        ⚙ open screen time settings
+      </button>
+    </div>
+  </div>;
+}
+
 // ── HomeScreen ────────────────────────────────────────────────────────────────
 const TL_START=6,TL_END=22,TL_SLOTS=TL_END-TL_START;
 
 function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,theme,isPrem,selTech,onSelTech}){
+  const[lockTarget,setLockTarget]=useState(null); // app being unlocked
   const streak=calcStreak(data.sessions);
   const today=todayStr();
   const todaySess=data.sessions.filter(s=>s.date===today);
@@ -280,6 +346,9 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
   const enabledApps=APPS.filter(a=>data.appEnabled?.[a.id]);
   const appEarned=data.appEarned||{};
   const cycleSeconds=selTech.phases.reduce((s,p)=>s+p.d,0);
+
+  // start session targeting a specific app
+  const handleBreatheForApp=(tech,appId)=>{ setLockTarget(null); onPick(tech,appId); };
 
   return<div style={{height:'100%',display:'flex',flexDirection:'column',background:th.bg}}>
     {/* Header */}
@@ -351,22 +420,33 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
             {enabledApps.map((app,i)=>{
               const ae=appEarned[app.id]||0;
               const isOpen=ae>0;
-              return<div key={app.id} className="app-row" style={{display:'flex',alignItems:'center',gap:'13px',padding:'12px 15px',borderBottom:i<enabledApps.length-1?`1px solid ${th.border}`:'none',cursor:'default'}}>
+              const handleRowTap=()=>{
+                if(!isPrem){onGate();return;}
+                if(isOpen) openApp(app);          // has earned time → open app
+                else setLockTarget(app);           // sealed → breathe to unlock
+              };
+              const handleSettingsTap=e=>{e.stopPropagation();openScreenTimeSettings();};
+              return<div key={app.id} onClick={handleRowTap} style={{display:'flex',alignItems:'center',gap:'13px',padding:'12px 15px',borderBottom:i<enabledApps.length-1?`1px solid ${th.border}`:'none',cursor:'pointer',transition:'background 0.15s ease'}}>
                 <div style={{width:'40px',height:'40px',borderRadius:'10px',background:app.color,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,position:'relative'}}>
                   <span style={{color:'rgba(255,255,255,0.92)',fontSize:'11px',fontWeight:700}}>{app.initials}</span>
-                  {!isOpen&&<div style={{position:'absolute',bottom:'-2px',right:'-2px',width:'11px',height:'11px',borderRadius:'50%',background:th.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                    <div style={{width:'6px',height:'6px',borderRadius:'50%',background:th.label}}/>
+                  {!isOpen&&<div style={{position:'absolute',bottom:'-2px',right:'-2px',width:'13px',height:'13px',borderRadius:'50%',background:th.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <span style={{fontSize:'8px'}}>🔒</span>
                   </div>}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <p style={{color:th.text,fontSize:'14px',fontWeight:500}}>{app.name}</p>
-                  <p style={{color:isOpen?th.teal:th.sealed,fontSize:'12px'}}>{isOpen?`${ae}:00 left`:'sealed'}</p>
+                  <p style={{color:isOpen?th.teal:th.sealed,fontSize:'12px'}}>{isOpen?`${ae}:00 left · tap to open`:'sealed · tap to breathe'}</p>
                 </div>
-                <span style={{color:isOpen?th.teal:th.text4,fontSize:'13px',fontWeight:isOpen?600:400,letterSpacing:'0.02em'}}>{isOpen?'open':'—'}</span>
+                <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                  <button onClick={handleSettingsTap} style={{background:'none',border:'none',color:th.label,fontSize:'14px',cursor:'pointer',padding:'4px',lineHeight:1,opacity:0.6}}>⚙</button>
+                  <span style={{color:isOpen?th.teal:th.text4,fontSize:'13px',fontWeight:isOpen?600:400,letterSpacing:'0.02em'}}>{isOpen?'open':'—'}</span>
+                </div>
               </div>;
             })}
           </div>
         )}
+        {/* Breathe-to-unlock sheet */}
+        {lockTarget&&<BreatheToUnlockSheet th={th} app={lockTarget} selTech={selTech} onSelTech={onSelTech} onStartSession={handleBreatheForApp} onClose={()=>setLockTarget(null)}/>}
       </div>
 
       {/* BREATHING section */}
@@ -412,7 +492,7 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
 
     {/* Sticky begin session */}
     <div style={{position:'absolute',bottom:0,left:0,right:0,maxWidth:'430px',margin:'0 auto',padding:'10px 16px 30px',background:`linear-gradient(to top,${th.bg} 65%,transparent)`}}>
-      <button className="btn-p" onClick={()=>onPick(selTech)} style={{width:'100%',background:th.btnBg,border:`1px solid ${th.id==='dark'?'rgba(255,255,255,0.13)':'rgba(30,90,220,0.2)'}`,borderRadius:'15px',padding:'18px 20px 14px',cursor:'pointer',textAlign:'center',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)'}}>
+      <button className="btn-p" onClick={()=>onPick(selTech,null)} style={{width:'100%',background:th.btnBg,border:`1px solid ${th.id==='dark'?'rgba(255,255,255,0.13)':'rgba(30,90,220,0.2)'}`,borderRadius:'15px',padding:'18px 20px 14px',cursor:'pointer',textAlign:'center',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)'}}>
         <p style={{color:'#fff',fontSize:'16px',fontWeight:600,marginBottom:'4px',letterSpacing:'-0.01em'}}>begin session</p>
         <p style={{color:'rgba(255,255,255,0.50)',fontSize:'11px',letterSpacing:'0.03em',fontFamily:"'DM Mono',monospace"}}>
           {selTech.name} · {selTech.phases.map(p=>p.d).join('·')} · ~{cycleSeconds*10}:00 reward
@@ -656,7 +736,10 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
       })}
 
       <div style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'13px',padding:'15px 17px',boxShadow:th.cardShadow}}>
-        <p style={{color:th.text,fontSize:'13px',fontWeight:500,marginBottom:'9px'}}>enforce on device</p>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'9px'}}>
+          <p style={{color:th.text,fontSize:'13px',fontWeight:500}}>enforce on device</p>
+          <button onClick={openScreenTimeSettings} className="btn-s" style={{background:th.tealBg,border:`1px solid ${th.teal}44`,borderRadius:'8px',padding:'5px 10px',color:th.teal,fontSize:'12px',fontWeight:600,cursor:'pointer'}}>⚙ open settings</button>
+        </div>
         {[['📱','iPhone','Settings → Screen Time → App Limits'],['🤖','Android','Digital Wellbeing → App Timers']].map(([ic,d,s])=>(
           <div key={d} style={{display:'flex',gap:'10px',alignItems:'flex-start',marginBottom:'5px'}}>
             <span style={{fontSize:'14px',flexShrink:0}}>{ic}</span>
@@ -678,6 +761,7 @@ function App(){
   const[data,setData]=useState(loadData);
   const[tab,setTab]=useState('home');
   const[tech,setTech]=useState(null);
+  const[techTarget,setTechTarget]=useState(null); // appId being unlocked by session
   const[selTech,setSelTech]=useState(TECHNIQUES[0]);
   const[sound,setSound]=useState(true);
   const[theme,setTheme]=useState(()=>loadData().theme||'dark');
@@ -699,13 +783,23 @@ function App(){
   const handleTrial=()=>{const d={...data,premium:{...data.premium,trial:true,trialStart:new Date().toISOString()}};update(d);setShowPrem(false);setTab('screentime');};
   const handleBuy=()=>{const d={...data,premium:{...data.premium,paid:true}};update(d);setShowPrem(false);setTab('screentime');};
 
+  const handlePickTech=(t,targetAppId=null)=>{ setTech(t); setTechTarget(targetAppId||null); };
+
   const handleDone=(techId,minutes,cycles)=>{
     const earned=minutes*10;
     const ae={...(data.appEarned||{})};
-    const ids=APPS.filter(a=>data.appEnabled?.[a.id]).map(a=>a.id);
-    ids.forEach(id=>{ae[id]=(ae[id]||0)+Math.round(earned/Math.max(ids.length,1));});
+    if(techTarget){
+      // credit all earned time to the targeted app specifically
+      ae[techTarget]=(ae[techTarget]||0)+earned;
+    } else {
+      const ids=APPS.filter(a=>data.appEnabled?.[a.id]).map(a=>a.id);
+      ids.forEach(id=>{ae[id]=(ae[id]||0)+Math.round(earned/Math.max(ids.length,1));});
+    }
     const d={...data,sessions:[...data.sessions,{date:todayStr(),technique:techId,duration:minutes,cycles,hour:new Date().getHours(),ts:Date.now()}],totalMin:data.totalMin+minutes,earnedMin:(data.earnedMin||0)+earned,appEarned:ae};
-    update(d);setTech(null);setTab('stats');
+    update(d);setTech(null);setTechTarget(null);
+    // if targeted a specific app, return to home so user can open it
+    setTab(techTarget?'home':'stats');
+    if(techTarget){ const app=APPS.find(a=>a.id===techTarget); if(app) setTimeout(()=>openApp(app),800); }
   };
 
   const nc=id=>tab===id?th.teal:th.label;
@@ -719,7 +813,7 @@ function App(){
       {tech?(
         <SessionScreen th={th} tech={tech} onDone={handleDone} onBack={()=>setTech(null)} sound={sound}/>
       ):tab==='home'?(
-        <HomeScreen th={th} data={data} onPick={setTech} onGate={handleGate} onReminder={()=>setShowRem(true)} sound={sound} onSound={()=>setSound(s=>!s)} onTheme={toggleTheme} theme={theme} isPrem={isPrem} selTech={selTech} onSelTech={setSelTech}/>
+        <HomeScreen th={th} data={data} onPick={handlePickTech} onGate={handleGate} onReminder={()=>setShowRem(true)} sound={sound} onSound={()=>setSound(s=>!s)} onTheme={toggleTheme} theme={theme} isPrem={isPrem} selTech={selTech} onSelTech={setSelTech}/>
       ):tab==='stats'?(
         <StatsScreen th={th} data={data}/>
       ):(
