@@ -827,8 +827,100 @@ function ScreenTimeSetup({th,appEnabled,appLimits}){
   </div>;
 }
 
+// ── ApplyLimitSheet ───────────────────────────────────────────────────────────
+const APP_SEARCH_NAMES={instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',twitter:'X'};
+
+function ApplyLimitSheet({th,app,limit,onClose}){
+  const[platform,setPlatform]=useState('ios');
+  const[copied,setCopied]=useState(false);
+  const searchName=APP_SEARCH_NAMES[app.id]||app.name;
+
+  const copyName=()=>{
+    navigator.clipboard.writeText(searchName).then(()=>{
+      setCopied(true); setTimeout(()=>setCopied(false),2000);
+    }).catch(()=>{});
+  };
+
+  const openSettings=()=>{
+    if(platform==='ios') window.location.href='App-Prefs:root=SCREENTIME';
+    else window.location.href='intent:#Intent;action=android.settings.DIGITAL_WELLBEING;end';
+  };
+
+  const iosSteps=[
+    {n:'01', text:`Open App Limits in Screen Time`, btn:'Open Settings', action:openSettings},
+    {n:'02', text:'Tap "Add Limit"', btn:null},
+    {n:'03', text:`Search for "${searchName}" and select it`, btn:copied?'Copied ✓':'Copy name', action:copyName, accent:true},
+    {n:'04', text:`Set time to  ${limit} min/day`, btn:null},
+    {n:'05', text:'Toggle "Block at End of Limit" ON — critical step', btn:null, warn:true},
+    {n:'06', text:'Tap "Add" to save', btn:null},
+  ];
+  const androidSteps=[
+    {n:'01', text:'Open Digital Wellbeing in Settings', btn:'Open Settings', action:openSettings},
+    {n:'02', text:'Tap "Dashboard"'},
+    {n:'03', text:`Find "${searchName}" in the list`, btn:copied?'Copied ✓':'Copy name', action:copyName, accent:true},
+    {n:'04', text:`Tap the hourglass icon → set ${limit} min/day`},
+    {n:'05', text:'App auto-pauses when time is up', warn:false},
+  ];
+  const steps=platform==='ios'?iosSteps:androidSteps;
+
+  return<div style={{position:'fixed',inset:0,background:th.overlay,display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:950,animation:'overlayIn 0.22s ease'}} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'430px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'28px 28px 0 0',padding:'28px 24px 48px',animation:'slideUp 0.36s cubic-bezier(0.4,0,0.2,1)',border:`1px solid ${th.border}`,borderBottom:'none',maxHeight:'88vh',overflowY:'auto'}}>
+      <div style={{width:'40px',height:'4px',borderRadius:'2px',background:th.text4,margin:'0 auto 22px'}}/>
+
+      {/* App + limit header */}
+      <div style={{display:'flex',alignItems:'center',gap:'14px',marginBottom:'20px'}}>
+        <div style={{width:'48px',height:'48px',borderRadius:'13px',background:app.color,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <span style={{color:'rgba(255,255,255,0.92)',fontSize:'14px',fontWeight:700}}>{app.initials}</span>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{color:th.text,fontSize:'17px',fontWeight:600,letterSpacing:'-0.01em'}}>{searchName}</p>
+          <p style={{color:th.text2,fontSize:'13px'}}>set limit to <span style={{color:th.teal,fontWeight:600}}>{limit} min/day</span> on device</p>
+        </div>
+        <button onClick={onClose} style={{background:th.text4,border:`1px solid ${th.border}`,borderRadius:'50%',width:'28px',height:'28px',color:th.label,fontSize:'14px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+      </div>
+
+      {/* Platform toggle */}
+      <div style={{display:'flex',gap:'6px',background:th.text4,borderRadius:'20px',padding:'4px',marginBottom:'20px'}}>
+        {['ios','android'].map(p=>(
+          <button key={p} onClick={()=>setPlatform(p)} style={{flex:1,background:platform===p?th.surf:'none',border:`1px solid ${platform===p?th.border:'transparent'}`,borderRadius:'16px',padding:'7px',color:platform===p?th.text:th.label,fontSize:'13px',fontWeight:platform===p?600:400,cursor:'pointer',transition:'all 0.18s ease',boxShadow:platform===p?th.cardShadow:'none'}}>
+            {p==='ios'?'📱 iPhone':'🤖 Android'}
+          </button>
+        ))}
+      </div>
+
+      {/* Steps */}
+      <div style={{display:'flex',flexDirection:'column',gap:'10px',marginBottom:'20px'}}>
+        {steps.map((s,i)=>(
+          <div key={i} style={{display:'flex',gap:'12px',alignItems:'flex-start'}}>
+            <div style={{width:'24px',height:'24px',borderRadius:'50%',background:s.warn?'rgba(232,162,60,0.15)':th.text4,border:`1.5px solid ${s.warn?'rgba(232,162,60,0.4)':th.border}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:'1px'}}>
+              <span style={{color:s.warn?'#e8a23c':th.label,fontSize:'9px',fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{s.n}</span>
+            </div>
+            <div style={{flex:1}}>
+              <p style={{color:s.warn?'#e8a23c':th.text,fontSize:'13px',lineHeight:1.5,fontWeight:s.warn?500:400}}>{s.text}</p>
+              {s.btn&&<button onClick={s.action} className="btn-s" style={{marginTop:'7px',background:s.accent?`${th.teal}18`:th.text4,border:`1px solid ${s.accent?th.teal+'44':th.border}`,borderRadius:'8px',padding:'6px 12px',color:s.accent?th.teal:th.text2,fontSize:'12px',fontWeight:600,cursor:'pointer',display:'inline-flex',alignItems:'center',gap:'5px'}}>
+                {s.btn==='Open Settings'&&'⚙ '}{s.btn}
+              </button>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Primary CTA */}
+      <button className="btn-p" onClick={openSettings} style={{width:'100%',background:th.teal,color:'#07111e',border:'none',borderRadius:'13px',padding:'15px',fontSize:'15px',fontWeight:700}}>
+        ⚙ Open {platform==='ios'?'Screen Time':'Digital Wellbeing'} →
+      </button>
+      <p style={{color:th.label,fontSize:'11px',textAlign:'center',marginTop:'10px',lineHeight:1.5}}>
+        {platform==='ios'
+          ?'iOS 12+ · Settings → Screen Time → App Limits'
+          :'Android 9+ · Settings → Digital Wellbeing → Dashboard'}
+      </p>
+    </div>
+  </div>;
+}
+
 // ── ScreentimeScreen ──────────────────────────────────────────────────────────
 function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
+  const[applyTarget,setApplyTarget]=useState(null); // {app,limit}
   const earned=data.earnedMin||0;
   const appEnabled=data.appEnabled||{instagram:true,tiktok:true,youtube:false,twitter:false};
   const appLimits=data.appLimits||{instagram:30,tiktok:30,youtube:60,twitter:30};
@@ -847,7 +939,7 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
     </div>
   );
 
-  return<div className="scroll-area fade-up" style={{paddingBottom:'88px'}}>
+  return<><div className="scroll-area fade-up" style={{paddingBottom:'88px'}}>
     <div style={{padding:'0 20px',paddingTop:'52px'}}>
       <p style={{color:th.label,fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',fontWeight:500,marginBottom:'8px'}}>SCREENTIME</p>
       <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'20px'}}>
@@ -890,13 +982,16 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
             <Toggle on={on} onToggle={()=>toggleApp(app.id)} th={th}/>
           </div>
           {on&&<>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'9px 15px',background:th.text4,borderTop:`1px solid ${th.border}`}}>
-              <p style={{color:th.text2,fontSize:'12px'}}>daily limit</p>
-              <div style={{display:'flex',alignItems:'center',gap:'11px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'9px 15px',background:th.text4,borderTop:`1px solid ${th.border}`}}>
+              <p style={{color:th.text2,fontSize:'12px',flexShrink:0}}>daily limit</p>
+              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                 <button onClick={()=>adjustLimit(app.id,-1)} style={{width:'26px',height:'26px',borderRadius:'50%',background:th.surf,border:`1px solid ${th.border}`,color:th.text,fontSize:'15px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
-                <span style={{color:th.text,fontSize:'14px',fontWeight:700,minWidth:'36px',textAlign:'center'}}>{lim}m</span>
+                <span style={{color:th.text,fontSize:'14px',fontWeight:700,minWidth:'32px',textAlign:'center'}}>{lim}m</span>
                 <button onClick={()=>adjustLimit(app.id,+1)} style={{width:'26px',height:'26px',borderRadius:'50%',background:th.surf,border:`1px solid ${th.border}`,color:th.text,fontSize:'15px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
               </div>
+              <button onClick={()=>setApplyTarget({app,limit:lim})} className="btn-p" style={{marginLeft:'auto',background:`${th.teal}18`,border:`1px solid ${th.teal}50`,borderRadius:'10px',padding:'6px 12px',color:th.teal,fontSize:'12px',fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>
+                Apply to iPhone →
+              </button>
             </div>
             <div style={{padding:'11px 15px',borderTop:`1px solid ${th.border}`}}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'7px'}}>
@@ -918,7 +1013,9 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
       <p style={{color:th.label,fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',fontWeight:500,marginBottom:'10px'}}>SETUP GUIDE</p>
       <ScreenTimeSetup th={th} appEnabled={appEnabled} appLimits={appLimits}/>
     </div>
-  </div>;
+  </div></div>
+  {applyTarget&&<ApplyLimitSheet th={th} app={applyTarget.app} limit={applyTarget.limit} onClose={()=>setApplyTarget(null)}/>}
+  </>;
 }
 
 // ── Nav Icons ─────────────────────────────────────────────────────────────────
