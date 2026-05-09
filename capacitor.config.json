@@ -1,0 +1,11 @@
+{
+  "appId": "com.breathe.app",
+  "appName": "Breathe",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#06101f"
+  }
+}
