@@ -90,26 +90,28 @@ const THEMES = {
     navBg:'rgba(6,16,31,0.95)', overlay:'rgba(0,0,0,0.72)',
     bloom:'rgba(94,196,224,0.05)', inputBg:'rgba(255,255,255,0.06)',
     toggleTrack:'rgba(255,255,255,0.10)',
+    cardShadow:'none',
   },
   light: {
-    id:'light', bg:'#eef4ff', bg2:'#e2ecff',
-    surf:'rgba(255,255,255,0.88)', surf2:'rgba(255,255,255,1)',
-    border:'rgba(0,0,0,0.07)', borderHi:'rgba(0,0,0,0.14)',
-    text:'rgba(8,18,42,0.92)', text2:'rgba(8,18,42,0.52)',
-    text3:'rgba(8,18,42,0.30)', text4:'rgba(8,18,42,0.09)',
+    id:'light', bg:'#e8f0ff', bg2:'#dce8ff',
+    surf:'rgba(255,255,255,1)', surf2:'rgba(255,255,255,1)',
+    border:'rgba(30,60,140,0.14)', borderHi:'rgba(30,60,140,0.24)',
+    text:'rgba(6,16,40,0.92)', text2:'rgba(6,16,40,0.54)',
+    text3:'rgba(6,16,40,0.36)', text4:'rgba(6,16,40,0.10)',
     accent:'#0891b2', accentBg:'rgba(8,145,178,0.10)',
-    navBg:'rgba(238,244,255,0.96)', overlay:'rgba(0,0,0,0.52)',
-    bloom:'rgba(8,145,178,0.06)', inputBg:'rgba(0,0,0,0.04)',
-    toggleTrack:'rgba(0,0,0,0.10)',
+    navBg:'rgba(232,240,255,0.97)', overlay:'rgba(0,0,0,0.52)',
+    bloom:'rgba(8,145,178,0.07)', inputBg:'rgba(6,16,40,0.04)',
+    toggleTrack:'rgba(6,16,40,0.12)',
+    cardShadow:'0 2px 10px rgba(20,50,120,0.07), 0 0 0 1px rgba(30,60,140,0.08)',
   },
 };
 
 // ── Techniques ───────────────────────────────────────────────────────────────
 const TECHNIQUES = [
-  { id:'box',      name:'Box Breathing',   tag:'Focus',  earnRate:3,   accent:'#5ec4e0', tagBg:'rgba(94,196,224,0.12)',  bg:'linear-gradient(145deg,#0a1e40,#0b2955)', desc:'Four equal sides. Navy SEALs use this to stay sharp under pressure.',   phases:[{l:'Inhale',d:4},{l:'Hold',d:4},{l:'Exhale',d:4},{l:'Hold',d:4}] },
-  { id:'478',      name:'4-7-8 Breathing', tag:'Sleep',  earnRate:3.5, accent:'#a48ee8', tagBg:'rgba(164,142,232,0.12)', bg:'linear-gradient(145deg,#150e3a,#1f1350)', desc:'Ancient pranayama. Extended exhale calms the nervous system for deep rest.', phases:[{l:'Inhale',d:4},{l:'Hold',d:7},{l:'Exhale',d:8}] },
-  { id:'calm',     name:'Deep Calm',       tag:'Relax',  earnRate:2.5, accent:'#4dbfae', tagBg:'rgba(77,191,174,0.12)',  bg:'linear-gradient(145deg,#082624,#0e3432)', desc:'Gentle 2-1-4-1 rhythm. Longer exhale activates the vagus nerve instantly.', phases:[{l:'Inhale',d:2},{l:'Hold',d:1},{l:'Exhale',d:4},{l:'Hold',d:1}] },
-  { id:'energize', name:'Energize',        tag:'Energy', earnRate:2,   accent:'#e8a23c', tagBg:'rgba(232,162,60,0.12)',  bg:'linear-gradient(145deg,#281600,#3c2000)', desc:'Power breathing 6-2. Floods the brain with oxygen for instant clarity.', phases:[{l:'Inhale',d:6},{l:'Exhale',d:2}] },
+  { id:'box',      name:'Box Breathing',   tag:'Focus',  accent:'#5ec4e0', tagBg:'rgba(94,196,224,0.12)',  bg:'linear-gradient(145deg,#0a1e40,#0b2955)', desc:'Four equal sides. Navy SEALs use this to stay sharp under pressure.',   phases:[{l:'Inhale',d:4},{l:'Hold',d:4},{l:'Exhale',d:4},{l:'Hold',d:4}] },
+  { id:'478',      name:'4-7-8 Breathing', tag:'Sleep',  accent:'#a48ee8', tagBg:'rgba(164,142,232,0.12)', bg:'linear-gradient(145deg,#150e3a,#1f1350)', desc:'Ancient pranayama. Extended exhale calms the nervous system for deep rest.', phases:[{l:'Inhale',d:4},{l:'Hold',d:7},{l:'Exhale',d:8}] },
+  { id:'calm',     name:'Deep Calm',       tag:'Relax',  accent:'#4dbfae', tagBg:'rgba(77,191,174,0.12)',  bg:'linear-gradient(145deg,#082624,#0e3432)', desc:'Gentle 2-1-4-1 rhythm. Longer exhale activates the vagus nerve instantly.', phases:[{l:'Inhale',d:2},{l:'Hold',d:1},{l:'Exhale',d:4},{l:'Hold',d:1}] },
+  { id:'energize', name:'Energize',        tag:'Energy', accent:'#e8a23c', tagBg:'rgba(232,162,60,0.12)',  bg:'linear-gradient(145deg,#281600,#3c2000)', desc:'Power breathing 6-2. Floods the brain with oxygen for instant clarity.', phases:[{l:'Inhale',d:6},{l:'Exhale',d:2}] },
 ];
 
 const APPS = [
@@ -148,7 +150,7 @@ function stopAmbient() {
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 const SK = 'breathe_v5';
-const DEF = { sessions:[], totalMin:0, earnedMin:0, appEarned:{}, appLimits:{}, premium:{paid:false,trial:false,trialStart:null}, reminder:{enabled:false,time:'08:00'}, theme:'dark' };
+const DEF = { sessions:[], totalMin:0, earnedMin:0, appEarned:{}, appLimits:{}, appEnabled:{instagram:true,tiktok:true,youtube:false,twitter:false}, premium:{paid:false,trial:false,trialStart:null}, reminder:{enabled:false,time:'08:00'}, theme:'dark' };
 const loadData = () => { try { return {...DEF,...JSON.parse(localStorage.getItem(SK))}; } catch(e) { return {...DEF}; } };
 const saveData = d => { try { localStorage.setItem(SK,JSON.stringify(d)); } catch(e) {} };
 const todayStr = () => new Date().toISOString().slice(0,10);
@@ -202,7 +204,7 @@ function PremiumModal({th, hasTrial, onClose, onTrial, onBuy}) {
           <p style={{color:th.text2,fontSize:'14px',lineHeight:1.55}}>Breathe your way to more time.<br/>Block apps. Earn screentime back.</p>
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'24px'}}>
-          {[['⏱','Earn screentime — 1 min breath = 3 min screen'],['🔒','Block Instagram, TikTok, YouTube, X'],['🔔','Daily reminders & streak protection'],['📊','Session analytics & breathing insights']].map(([icon,text],i)=>(
+          {[['⏱','Earn screentime — 1 min breathing = 10 min screen'],['🔒','Block Instagram, TikTok, YouTube, X'],['🔔','Daily reminders & streak protection'],['📊','Session analytics & breathing insights']].map(([icon,text],i)=>(
             <div key={i} style={{display:'flex',alignItems:'center',gap:'12px',background:th.surf,border:`1px solid ${th.border}`,borderRadius:'12px',padding:'12px 14px'}}>
               <span style={{fontSize:'18px',flexShrink:0}}>{icon}</span>
               <p style={{color:th.text,fontSize:'14px'}}>{text}</p>
@@ -256,7 +258,7 @@ function ReminderSheet({th, reminder, onSave, onClose}) {
 
 // ── SessionComplete ───────────────────────────────────────────────────────────
 function SessionComplete({th, tech, cycles, minutes, onContinue}) {
-  const earned = Math.round(minutes * tech.earnRate);
+  const earned = minutes * 10;
   return (
     <div style={{position:'fixed',inset:0,background:th.overlay,display:'flex',alignItems:'center',justifyContent:'center',zIndex:500,padding:'24px',animation:'overlayIn 0.28s ease'}}>
       <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'360px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'24px',padding:'32px 24px',border:`1px solid ${th.border}`,animation:'popIn 0.5s cubic-bezier(0.34,1.2,0.64,1)',textAlign:'center'}}>
@@ -485,7 +487,7 @@ function HomeScreen({th, data, onPick, onGate, onReminder, sound, onSound, onThe
             {label:'Today',  val:`${todayCount}/3`, icon:'◎', color:todayCount>=3?'#4dbfae':null},
             {label:'Total',  val:data.sessions.length, icon:'↑', color:null},
           ].map(s=>(
-            <div key={s.label} style={{flex:1,background:th.surf,border:`1px solid ${th.border}`,borderRadius:'14px',padding:'14px 12px',transition:'background 0.3s ease'}}>
+            <div key={s.label} style={{flex:1,background:th.surf,border:`1px solid ${th.border}`,borderRadius:'14px',padding:'14px 12px',transition:'background 0.3s ease',boxShadow:th.cardShadow}}>
               <p style={{color:th.text3,fontSize:'10px',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'5px'}}>{s.label}</p>
               <p style={{color:s.color||th.text,fontSize:'16px',fontWeight:600,letterSpacing:'-0.01em'}}>
                 {s.icon!=='—'&&<span style={{marginRight:'3px',fontSize:'13px'}}>{s.icon}</span>}{s.val}
@@ -503,7 +505,7 @@ function HomeScreen({th, data, onPick, onGate, onReminder, sound, onSound, onThe
               <div style={{flex:1}}>
                 <p style={{color:th.text,fontSize:'15px',fontWeight:600,marginBottom:'3px'}}>Earn Screentime by Breathing</p>
                 {isPrem
-                  ? <p style={{color:th.text2,fontSize:'13px'}}><span style={{color:'#a48ee8',fontWeight:600}}>{earned} min</span> in bank · 1 min breath = 3 min screen</p>
+                  ? <p style={{color:th.text2,fontSize:'13px'}}><span style={{color:'#a48ee8',fontWeight:600}}>{earned} min</span> in bank · 1 min breathing = 10 min screen</p>
                   : <p style={{color:th.text2,fontSize:'13px'}}>Block Instagram. Breathe to earn it back. →</p>
                 }
               </div>
@@ -577,7 +579,7 @@ function StatsScreen({th, data}) {
         {/* Nums */}
         <div style={{display:'flex',gap:'10px',marginBottom:'12px'}}>
           {[{label:'Sessions',val:data.sessions.length},{label:'Minutes',val:data.totalMin}].map(s=>(
-            <div key={s.label} style={{flex:1,background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'18px',textAlign:'center'}}>
+            <div key={s.label} style={{flex:1,background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'18px',boxShadow:th.cardShadow,textAlign:'center'}}>
               <p style={{color:th.text3,fontSize:'11px',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'4px'}}>{s.label}</p>
               <p style={{fontSize:'32px',fontWeight:500,color:th.text,letterSpacing:'-0.04em'}}>{s.val}</p>
             </div>
@@ -627,14 +629,34 @@ function StatsScreen({th, data}) {
 }
 
 // ── ScreentimeScreen ──────────────────────────────────────────────────────────
+const LIMIT_STEPS = [5,10,15,20,30,45,60,90,120];
+function nextStep(v,dir) {
+  const i=LIMIT_STEPS.indexOf(v);
+  if(i===-1) return dir>0?LIMIT_STEPS[1]:LIMIT_STEPS[0];
+  return LIMIT_STEPS[Math.max(0,Math.min(LIMIT_STEPS.length-1,i+dir))];
+}
+
 function ScreentimeScreen({th, data, isPrem, onGate, onUpdate}) {
-  const earned = data.earnedMin||0;
-  const handleUse = (appId, min) => {
-    const ae = {...(data.appEarned||{})};
-    if((ae[appId]||0)<min) return;
-    ae[appId]=(ae[appId]||0)-min;
+  const earned     = data.earnedMin||0;
+  const appEnabled = data.appEnabled||{instagram:true,tiktok:true,youtube:false,twitter:false};
+  const appLimits  = data.appLimits||{instagram:30,tiktok:30,youtube:60,twitter:30};
+  const appEarned  = data.appEarned||{};
+
+  const toggleApp = id => {
+    const ae = {...appEnabled, [id]:!appEnabled[id]};
+    onUpdate({...data, appEnabled:ae});
+  };
+  const adjustLimit = (id,dir) => {
+    const lim = {...appLimits, [id]:nextStep(appLimits[id]||30, dir)};
+    onUpdate({...data, appLimits:lim});
+  };
+  const useTime = (id,min) => {
+    const ae={...appEarned};
+    if((ae[id]||0)<min) return;
+    ae[id]=(ae[id]||0)-min;
     onUpdate({...data, appEarned:ae});
   };
+
   if(!isPrem) return (
     <div className="fade-up" style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 28px',textAlign:'center'}}>
       <div style={{width:'72px',height:'72px',borderRadius:'24px',margin:'0 auto 20px',background:'linear-gradient(135deg,rgba(164,142,232,0.2),rgba(94,196,224,0.15))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'32px',border:'1px solid rgba(164,142,232,0.3)'}}>🔒</div>
@@ -643,50 +665,103 @@ function ScreentimeScreen({th, data, isPrem, onGate, onUpdate}) {
       <button className="btn-p" onClick={onGate} style={{background:'linear-gradient(135deg,#a48ee8,#5ec4e0)',border:'none',borderRadius:'50px',padding:'16px 40px',color:'#fff',fontSize:'16px',fontWeight:700,boxShadow:'0 6px 24px rgba(164,142,232,0.38)'}}>Unlock Premium</button>
     </div>
   );
+
+  const trackedApps = APPS.filter(a=>appEnabled[a.id]);
+  const totalBank   = earned;
+
   return (
     <div className="scroll-area fade-up" style={{paddingBottom:'88px'}}>
       <div style={{padding:'0 20px',paddingTop:'52px'}}>
-        <h2 style={{fontSize:'24px',fontWeight:300,letterSpacing:'-0.025em',color:th.text,marginBottom:'22px'}}>Screen<span style={{fontWeight:700}}>time</span></h2>
-        {/* Bank */}
-        <div style={{background:'linear-gradient(135deg,rgba(164,142,232,0.15),rgba(94,196,224,0.09))',border:'1px solid rgba(164,142,232,0.25)',borderRadius:'20px',padding:'24px',textAlign:'center',marginBottom:'16px'}}>
-          <p style={{color:'rgba(164,142,232,0.8)',fontSize:'11px',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:'6px'}}>Screentime Bank</p>
-          <p style={{fontSize:'48px',fontWeight:300,color:'#a48ee8',letterSpacing:'-0.05em',lineHeight:1,marginBottom:'4px'}}>{earned}</p>
-          <p style={{color:th.text2,fontSize:'14px'}}>minutes earned · 1 min breathing = 3 min screen</p>
+        <h2 style={{fontSize:'24px',fontWeight:300,letterSpacing:'-0.025em',color:th.text,marginBottom:'22px'}}>
+          Screen<span style={{fontWeight:700}}>time</span>
+        </h2>
+
+        {/* Bank card */}
+        <div style={{background:'linear-gradient(135deg,rgba(164,142,232,0.15),rgba(94,196,224,0.09))',border:'1px solid rgba(164,142,232,0.25)',borderRadius:'20px',padding:'22px 24px',marginBottom:'16px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+            <div>
+              <p style={{color:'rgba(164,142,232,0.8)',fontSize:'11px',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:'6px'}}>Screentime Bank</p>
+              <p style={{fontSize:'44px',fontWeight:300,color:'#a48ee8',letterSpacing:'-0.05em',lineHeight:1,marginBottom:'4px'}}>{totalBank}<span style={{fontSize:'18px',opacity:0.6}}> min</span></p>
+              <p style={{color:th.text2,fontSize:'13px'}}>1 min breathing = 10 min screen</p>
+            </div>
+            <div style={{background:'rgba(164,142,232,0.12)',border:'1px solid rgba(164,142,232,0.2)',borderRadius:'12px',padding:'10px 14px',textAlign:'center'}}>
+              <p style={{color:'#a48ee8',fontSize:'11px',fontWeight:600,marginBottom:'2px'}}>TODAY</p>
+              <p style={{color:'#a48ee8',fontSize:'20px',fontWeight:700}}>{trackedApps.length}</p>
+              <p style={{color:'rgba(164,142,232,0.7)',fontSize:'10px'}}>apps tracked</p>
+            </div>
+          </div>
         </div>
-        <p style={{color:th.text3,fontSize:'10px',letterSpacing:'0.1em',textTransform:'uppercase',fontWeight:600,marginBottom:'12px'}}>App Allowances</p>
+
+        {/* App setup — which to block + daily limit */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
+          <p style={{color:th.text3,fontSize:'10px',letterSpacing:'0.1em',textTransform:'uppercase',fontWeight:600}}>App Blocking Setup</p>
+          <p style={{color:th.text3,fontSize:'11px'}}>Toggle · Set daily limit</p>
+        </div>
+
         {APPS.map((app,i)=>{
-          const ae  = data.appEarned?.[app.id]||0;
-          const lim = data.appLimits?.[app.id]||app.limit;
+          const on  = !!appEnabled[app.id];
+          const lim = appLimits[app.id]||app.limit;
+          const ae  = appEarned[app.id]||0;
+          const pct = Math.min(100,(ae/Math.max(lim,1))*100);
           return (
-            <div key={app.id} className="fade-up" style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'16px 18px',marginBottom:'10px',animationDelay:`${i*55}ms`}}>
-              <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'12px'}}>
-                <span style={{fontSize:'22px'}}>{app.emoji}</span>
+            <div key={app.id} className="fade-up" style={{background:th.surf,border:`1px solid ${on?th.borderHi:th.border}`,borderRadius:'16px',marginBottom:'10px',overflow:'hidden',animationDelay:`${i*50}ms`,boxShadow:th.cardShadow,opacity:on?1:0.65,transition:'opacity 0.2s ease,border-color 0.2s ease'}}>
+              {/* Header row */}
+              <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px'}}>
+                <span style={{fontSize:'22px',flexShrink:0}}>{app.emoji}</span>
                 <div style={{flex:1}}>
                   <p style={{color:th.text,fontSize:'15px',fontWeight:600}}>{app.name}</p>
-                  <p style={{color:th.text2,fontSize:'12px'}}>Daily limit: {lim} min</p>
+                  <p style={{color:th.text2,fontSize:'12px'}}>Block after <span style={{color:on?th.accent:th.text3,fontWeight:600}}>{lim} min</span>/day</p>
                 </div>
-                <div style={{textAlign:'right'}}>
-                  <p style={{color:'#a48ee8',fontSize:'18px',fontWeight:700}}>{ae}m</p>
-                  <p style={{color:th.text3,fontSize:'11px'}}>earned</p>
-                </div>
+                <Toggle on={on} onToggle={()=>toggleApp(app.id)} th={th}/>
               </div>
-              <div style={{height:'4px',background:th.text4,borderRadius:'2px',marginBottom:'10px'}}>
-                <div style={{height:'100%',width:`${Math.min(100,(ae/Math.max(lim,1))*100)}%`,borderRadius:'2px',background:'#a48ee8',transition:'width 0.8s ease'}}/>
-              </div>
-              <div style={{display:'flex',gap:'8px'}}>
-                {[15,30,60].map(m=>(
-                  <button key={m} onClick={()=>handleUse(app.id,m)} style={{flex:1,background:ae>=m?'rgba(164,142,232,0.12)':th.text4,border:`1px solid ${ae>=m?'rgba(164,142,232,0.3)':th.border}`,borderRadius:'8px',padding:'7px',color:ae>=m?'#a48ee8':th.text3,fontSize:'12px',fontWeight:600,cursor:'pointer',opacity:ae>=m?1:0.4,transition:'all 0.2s ease'}}>
-                    Use {m}m
-                  </button>
-                ))}
-              </div>
+
+              {on && (
+                <>
+                  {/* Limit adjuster */}
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',background:th.text4,borderTop:`1px solid ${th.border}`}}>
+                    <p style={{color:th.text2,fontSize:'12px',fontWeight:500}}>Daily limit</p>
+                    <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                      <button onClick={()=>adjustLimit(app.id,-1)} style={{width:'28px',height:'28px',borderRadius:'50%',background:th.surf,border:`1px solid ${th.border}`,color:th.text,fontSize:'16px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,transition:'background 0.15s ease'}}>−</button>
+                      <span style={{color:th.text,fontSize:'15px',fontWeight:700,minWidth:'40px',textAlign:'center'}}>{lim}m</span>
+                      <button onClick={()=>adjustLimit(app.id,+1)} style={{width:'28px',height:'28px',borderRadius:'50%',background:th.surf,border:`1px solid ${th.border}`,color:th.text,fontSize:'16px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,transition:'background 0.15s ease'}}>+</button>
+                    </div>
+                  </div>
+
+                  {/* Earned balance + spend */}
+                  <div style={{padding:'12px 16px',borderTop:`1px solid ${th.border}`}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
+                      <p style={{color:th.text2,fontSize:'12px'}}>Earned for {app.name}</p>
+                      <p style={{color:'#a48ee8',fontSize:'14px',fontWeight:700}}>{ae} min</p>
+                    </div>
+                    <div style={{height:'4px',background:th.text4,borderRadius:'2px',marginBottom:'10px'}}>
+                      <div style={{height:'100%',width:`${pct}%`,borderRadius:'2px',background:'#a48ee8',transition:'width 0.8s ease'}}/>
+                    </div>
+                    <div style={{display:'flex',gap:'8px'}}>
+                      {[10,20,30].map(m=>(
+                        <button key={m} onClick={()=>useTime(app.id,m)} style={{flex:1,background:ae>=m?'rgba(164,142,232,0.12)':th.text4,border:`1px solid ${ae>=m?'rgba(164,142,232,0.30)':th.border}`,borderRadius:'8px',padding:'7px',color:ae>=m?'#a48ee8':th.text3,fontSize:'12px',fontWeight:600,cursor:ae>=m?'pointer':'default',opacity:ae>=m?1:0.35,transition:'all 0.2s ease'}}>
+                          Use {m}m
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
-        <div style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'18px',textAlign:'center',marginTop:'4px'}}>
-          <p style={{fontSize:'22px',marginBottom:'8px'}}>📱</p>
-          <p style={{color:th.text,fontSize:'14px',fontWeight:500,marginBottom:'4px'}}>Enforce on Your Phone</p>
-          <p style={{color:th.text2,fontSize:'13px',lineHeight:1.6}}>iPhone: Settings → Screen Time → App Limits<br/>Android: Digital Wellbeing → App Timers<br/>Use your earned minutes as your daily budget.</p>
+
+        {/* How it works */}
+        <div style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'18px 20px',marginTop:'4px',boxShadow:th.cardShadow}}>
+          <p style={{color:th.text,fontSize:'14px',fontWeight:600,marginBottom:'10px'}}>How to enforce on device</p>
+          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+            {[['📱','iPhone','Settings → Screen Time → App Limits'],['🤖','Android','Digital Wellbeing → App Timers']].map(([ic,dev,step])=>(
+              <div key={dev} style={{display:'flex',gap:'10px',alignItems:'flex-start'}}>
+                <span style={{fontSize:'16px',flexShrink:0}}>{ic}</span>
+                <p style={{color:th.text2,fontSize:'13px',lineHeight:1.5}}><span style={{color:th.text,fontWeight:500}}>{dev}:</span> {step}</p>
+              </div>
+            ))}
+          </div>
+          <p style={{color:th.text3,fontSize:'12px',marginTop:'10px',lineHeight:1.5}}>Set limits there matching your settings here. Use earned minutes as your daily extension budget.</p>
         </div>
       </div>
     </div>
@@ -748,7 +823,7 @@ function App() {
 
   const handleDone = (techId, minutes, cycles) => {
     const t = TECHNIQUES.find(x=>x.id===techId);
-    const earned = Math.round(minutes*(t?.earnRate||3));
+    const earned = minutes * 10;
     const ae = {...(data.appEarned||{})};
     APPS.forEach(a=>{ ae[a.id]=(ae[a.id]||0)+Math.round(earned/APPS.length); });
     const d={
