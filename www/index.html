@@ -1013,7 +1013,7 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
       <p style={{color:th.label,fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',fontWeight:500,marginBottom:'10px'}}>SETUP GUIDE</p>
       <ScreenTimeSetup th={th} appEnabled={appEnabled} appLimits={appLimits}/>
     </div>
-  </div></div>
+  </div>
   {applyTarget&&<ApplyLimitSheet th={th} app={applyTarget.app} limit={applyTarget.limit} onClose={()=>setApplyTarget(null)}/>}
   </>;
 }
