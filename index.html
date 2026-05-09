@@ -280,6 +280,72 @@ function SessionScreen({th,tech,onDone,onBack,sound}){
   </div>;
 }
 
+// ── LearnInline — embedded in home BREATHING section ─────────────────────────
+function LearnInline({th,onStartPractice}){
+  const[exp,setExp]=useState(null);
+  return<div style={{paddingBottom:'4px'}}>
+    {TECHNIQUES.map((t,i)=>{
+      const info=TECHNIQUE_INFO[t.id];
+      const isExp=exp===t.id;
+      const maxPhase=Math.max(...t.phases.map(p=>p.d));
+      return<div key={t.id} style={{marginBottom:'10px',animation:`fadeUp 0.36s ${i*50}ms ease both`}}>
+        {/* Collapsed header */}
+        <div onClick={()=>setExp(e=>e===t.id?null:t.id)} style={{background:t.bg,border:'1px solid rgba(255,255,255,0.07)',borderRadius:isExp?'13px 13px 0 0':'13px',padding:'14px 16px',cursor:'pointer',position:'relative',overflow:'hidden',userSelect:'none'}}>
+          <div style={{position:'absolute',top:'-10px',right:'-10px',width:'50px',height:'50px',borderRadius:'50%',background:t.accent,opacity:0.13,filter:'blur(16px)',pointerEvents:'none'}}/>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+              <span style={{background:t.tagBg,color:t.accent,fontSize:'9px',fontWeight:700,letterSpacing:'0.07em',textTransform:'uppercase',padding:'2px 8px',borderRadius:'20px'}}>{t.tag}</span>
+              <p style={{color:'rgba(255,255,255,0.90)',fontSize:'14px',fontWeight:600}}>{t.name}</p>
+              <p style={{color:'rgba(255,255,255,0.30)',fontSize:'11px'}}>{info.cycle}</p>
+            </div>
+            <span style={{color:t.accent,fontSize:'13px',transition:'transform 0.22s ease',transform:isExp?'rotate(180deg)':'rotate(0deg)',display:'block'}}>↓</span>
+          </div>
+          {/* Phase bars */}
+          <div style={{display:'flex',flexDirection:'column',gap:'5px'}}>
+            {t.phases.map((p,pi)=>(
+              <div key={pi} style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                <p style={{color:'rgba(255,255,255,0.28)',fontSize:'9px',width:'38px',flexShrink:0}}>{p.l}</p>
+                <div style={{flex:1,height:'3px',background:'rgba(255,255,255,0.08)',borderRadius:'2px'}}>
+                  <div style={{height:'100%',width:`${(p.d/maxPhase)*100}%`,borderRadius:'2px',background:t.accent,opacity:0.70}}/>
+                </div>
+                <p style={{color:'rgba(255,255,255,0.28)',fontSize:'9px',width:'16px',textAlign:'right'}}>{p.d}s</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Expanded */}
+        {isExp&&<div style={{background:th.surf,border:'1px solid rgba(255,255,255,0.07)',borderTop:'none',borderRadius:'0 0 13px 13px',padding:'16px',animation:'fadeUp 0.25s ease both',boxShadow:th.cardShadow}}>
+          {/* Steps */}
+          <p style={{color:th.label,fontSize:'9px',letterSpacing:'0.13em',textTransform:'uppercase',fontWeight:500,marginBottom:'10px'}}>HOW TO DO IT</p>
+          <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
+            {info.steps.map((step,si)=>(
+              <div key={si} style={{display:'flex',gap:'10px',alignItems:'flex-start'}}>
+                <div style={{width:'18px',height:'18px',borderRadius:'50%',background:t.tagBg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:'1px'}}>
+                  <span style={{color:t.accent,fontSize:'9px',fontWeight:700}}>{si+1}</span>
+                </div>
+                <p style={{color:th.text2,fontSize:'12px',lineHeight:1.55,flex:1}}>{step}</p>
+              </div>
+            ))}
+          </div>
+          {/* Science */}
+          <p style={{color:th.label,fontSize:'9px',letterSpacing:'0.13em',textTransform:'uppercase',fontWeight:500,marginBottom:'7px'}}>SCIENCE</p>
+          <p style={{color:th.text2,fontSize:'12px',lineHeight:1.6,marginBottom:'14px',paddingLeft:'10px',borderLeft:`2px solid ${t.accent}55`}}>{info.science}</p>
+          {/* Benefits */}
+          <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'14px'}}>
+            {info.benefits.map((b,bi)=>(
+              <span key={bi} style={{background:t.tagBg,border:`1px solid ${t.accent}28`,borderRadius:'20px',padding:'4px 10px',color:t.accent,fontSize:'11px'}}>{b}</span>
+            ))}
+          </div>
+          <button className="btn-p" onClick={()=>onStartPractice(t)} style={{width:'100%',background:t.accent,color:'#07111e',border:'none',borderRadius:'10px',padding:'12px',fontSize:'13px',fontWeight:700,boxShadow:`0 3px 14px ${t.accent}40`}}>
+            start {t.name} →
+          </button>
+        </div>}
+      </div>;
+    })}
+  </div>;
+}
+
 // ── BreatheToUnlock sheet ─────────────────────────────────────────────────────
 function BreatheToUnlockSheet({th,app,selTech,onSelTech,onStartSession,onClose}){
   const cycleSeconds=selTech.phases.reduce((s,p)=>s+p.d,0);
@@ -335,7 +401,8 @@ function BreatheToUnlockSheet({th,app,selTech,onSelTech,onStartSession,onClose})
 const TL_START=6,TL_END=22,TL_SLOTS=TL_END-TL_START;
 
 function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,theme,isPrem,selTech,onSelTech}){
-  const[lockTarget,setLockTarget]=useState(null); // app being unlocked
+  const[lockTarget,setLockTarget]=useState(null);
+  const[btab,setBtab]=useState('practice'); // 'practice' | 'learn'
   const streak=calcStreak(data.sessions);
   const today=todayStr();
   const todaySess=data.sessions.filter(s=>s.date===today);
@@ -451,42 +518,63 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
 
       {/* BREATHING section */}
       <div style={{padding:'0 20px'}}>
-        <p style={{color:th.label,fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',fontWeight:500,marginBottom:'10px'}}>BREATHING</p>
-
-        {/* technique chips */}
-        <div className="scroll-x" style={{display:'flex',gap:'8px',marginBottom:'12px',paddingBottom:'2px'}}>
-          {TECHNIQUES.map(t=>{
-            const active=selTech.id===t.id;
-            return<button key={t.id} className="tech-chip" onClick={()=>onSelTech(t)} style={{flexShrink:0,background:active?t.accent:th.text4,border:`1px solid ${active?t.accent:th.border}`,borderRadius:'20px',padding:'7px 14px',color:active?'#07111e':th.text2,fontSize:'13px',fontWeight:active?600:400,whiteSpace:'nowrap'}}>
-              {t.name}<span style={{opacity:0.6,fontSize:'11px',marginLeft:'4px'}}>{t.tag}</span>
-            </button>;
-          })}
-        </div>
-
-        {/* selected tech detail */}
-        <div style={{background:selTech.bg,border:'1px solid rgba(255,255,255,0.07)',borderRadius:'13px',padding:'14px 16px',marginBottom:'10px',position:'relative',overflow:'hidden'}}>
-          <div style={{position:'absolute',top:'-10px',right:'-10px',width:'56px',height:'56px',borderRadius:'50%',background:selTech.accent,opacity:0.14,filter:'blur(16px)'}}/>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-            <div style={{flex:1,paddingRight:'12px'}}>
-              <p style={{color:'rgba(255,255,255,0.88)',fontSize:'14px',fontWeight:600,marginBottom:'3px'}}>{selTech.name}</p>
-              <p style={{color:'rgba(255,255,255,0.42)',fontSize:'12px',marginBottom:'8px',lineHeight:1.4}}>{selTech.desc}</p>
-              <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
-                {selTech.phases.map((p,i)=><span key={i} style={{color:'rgba(255,255,255,0.45)',fontSize:'11px',fontFamily:"'DM Mono',monospace"}}>{i>0?' · ':''}{p.d}</span>)}
-              </div>
-            </div>
-            <div style={{textAlign:'right',flexShrink:0}}>
-              <p style={{color:selTech.accent,fontSize:'12px',fontWeight:600,marginBottom:'1px'}}>+{cycleSeconds*10/60|0}m</p>
-              <p style={{color:'rgba(255,255,255,0.30)',fontSize:'10px'}}>per cycle</p>
-            </div>
+        {/* Section header + practice/learn tab toggle */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+          <p style={{color:th.label,fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',fontWeight:500}}>BREATHING</p>
+          <div style={{display:'flex',gap:'3px',background:th.text4,borderRadius:'20px',padding:'3px'}}>
+            {['practice','learn'].map(bt=>(
+              <button key={bt} onClick={()=>setBtab(bt)} style={{
+                background:btab===bt?th.surf:'none',
+                border:`1px solid ${btab===bt?th.border:'transparent'}`,
+                borderRadius:'16px',padding:'4px 12px',
+                color:btab===bt?th.text:th.label,
+                fontSize:'11px',fontWeight:btab===bt?500:400,
+                cursor:'pointer',transition:'all 0.18s ease',
+                boxShadow:btab===bt?th.cardShadow:'none',
+              }}>{bt}</button>
+            ))}
           </div>
         </div>
 
-        {/* reminder row */}
-        <div className="tap" onClick={onReminder} style={{display:'flex',alignItems:'center',gap:'12px',padding:'11px 0',borderTop:`1px solid ${th.border}`}}>
-          <span style={{fontSize:'17px'}}>🔔</span>
-          <p style={{color:th.text2,fontSize:'13px',flex:1}}>{data.reminder?.enabled?`reminder · ${data.reminder.time}`:'set daily reminder'}</p>
-          <div style={{width:'6px',height:'6px',borderRadius:'50%',background:data.reminder?.enabled?th.teal:th.text4}}/>
-        </div>
+        {btab==='practice'?(<>
+          {/* Technique chips */}
+          <div className="scroll-x" style={{display:'flex',gap:'8px',marginBottom:'12px',paddingBottom:'2px'}}>
+            {TECHNIQUES.map(t=>{
+              const active=selTech.id===t.id;
+              return<button key={t.id} className="tech-chip" onClick={()=>onSelTech(t)} style={{flexShrink:0,background:active?t.accent:th.text4,border:`1px solid ${active?t.accent:th.border}`,borderRadius:'20px',padding:'7px 14px',color:active?'#07111e':th.text2,fontSize:'13px',fontWeight:active?600:400,whiteSpace:'nowrap'}}>
+                {t.name}<span style={{opacity:0.6,fontSize:'11px',marginLeft:'4px'}}>{t.tag}</span>
+              </button>;
+            })}
+          </div>
+
+          {/* Selected tech detail */}
+          <div style={{background:selTech.bg,border:'1px solid rgba(255,255,255,0.07)',borderRadius:'13px',padding:'14px 16px',marginBottom:'10px',position:'relative',overflow:'hidden'}}>
+            <div style={{position:'absolute',top:'-10px',right:'-10px',width:'56px',height:'56px',borderRadius:'50%',background:selTech.accent,opacity:0.14,filter:'blur(16px)'}}/>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div style={{flex:1,paddingRight:'12px'}}>
+                <p style={{color:'rgba(255,255,255,0.88)',fontSize:'14px',fontWeight:600,marginBottom:'3px'}}>{selTech.name}</p>
+                <p style={{color:'rgba(255,255,255,0.42)',fontSize:'12px',marginBottom:'8px',lineHeight:1.4}}>{selTech.desc}</p>
+                <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
+                  {selTech.phases.map((p,i)=><span key={i} style={{color:'rgba(255,255,255,0.45)',fontSize:'11px',fontFamily:"'DM Mono',monospace"}}>{i>0?' · ':''}{p.d}</span>)}
+                </div>
+              </div>
+              <div style={{textAlign:'right',flexShrink:0}}>
+                <p style={{color:selTech.accent,fontSize:'12px',fontWeight:600,marginBottom:'1px'}}>+{cycleSeconds*10/60|0}m</p>
+                <p style={{color:'rgba(255,255,255,0.30)',fontSize:'10px'}}>per cycle</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Reminder row */}
+          <div className="tap" onClick={onReminder} style={{display:'flex',alignItems:'center',gap:'12px',padding:'11px 0',borderTop:`1px solid ${th.border}`}}>
+            <span style={{fontSize:'17px'}}>🔔</span>
+            <p style={{color:th.text2,fontSize:'13px',flex:1}}>{data.reminder?.enabled?`reminder · ${data.reminder.time}`:'set daily reminder'}</p>
+            <div style={{width:'6px',height:'6px',borderRadius:'50%',background:data.reminder?.enabled?th.teal:th.text4}}/>
+          </div>
+        </>):(
+          /* Learn tab — inline technique cards */
+          <LearnInline th={th} onStartPractice={t=>{onSelTech(t);setBtab('practice');}}/>
+        )}
       </div>
     </div>
 
@@ -648,6 +736,97 @@ function StatsScreen({th,data}){
   </div>;
 }
 
+// ── ScreenTimeSetup — step-by-step iOS/Android setup cards ───────────────────
+function ScreenTimeSetup({th,appEnabled,appLimits}){
+  const[done,setDone]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem('breathe_setup')||'{}');}catch(e){return{};}
+  });
+  const mark=(id)=>{
+    const n={...done,[id]:!done[id]};
+    setDone(n);
+    try{localStorage.setItem('breathe_setup',JSON.stringify(n));}catch(e){}
+  };
+
+  const enabledApps=APPS.filter(a=>appEnabled?.[a.id]);
+
+  const steps=[
+    {
+      id:'enable',
+      num:'01',
+      title:'Enable Screen Time',
+      desc:'Turn on Screen Time in Settings. This activates all parental controls and app limits.',
+      action:'Open Screen Time →',
+      btn:()=>window.location.href='App-Prefs:root=SCREENTIME',
+      os:'iOS',
+    },
+    {
+      id:'limits',
+      num:'02',
+      title:'Set App Limits',
+      desc:enabledApps.length>0
+        ?`Add limits for: ${enabledApps.map(a=>`${a.name} (${appLimits?.[a.id]||a.limit}m)`).join(', ')}. App Limits → Add Limit → search app → set time.`
+        :'Add Limit for each app. App Limits → Add Limit → search Instagram / TikTok → set daily time.',
+      action:'Open App Limits →',
+      btn:()=>window.location.href='App-Prefs:root=SCREENTIME',
+      os:'iOS',
+    },
+    {
+      id:'block',
+      num:'03',
+      title:'Enable "Block at End of Limit"',
+      desc:'Critical step — without this, the limit only shows a warning. Toggle it ON for each app you set a limit for.',
+      action:'Open App Limits →',
+      btn:()=>window.location.href='App-Prefs:root=SCREENTIME',
+      os:'iOS',
+    },
+    {
+      id:'passcode',
+      num:'04',
+      title:'Set a Screen Time Passcode',
+      desc:'Use a passcode you won\'t remember easily — or give it to a friend. Without this anyone can remove the limits.',
+      action:'Set Passcode →',
+      btn:()=>window.location.href='App-Prefs:root=SCREENTIME',
+      os:'iOS',
+    },
+    {
+      id:'android',
+      num:'05',
+      title:'Android — Digital Wellbeing',
+      desc:'Settings → Digital Wellbeing → Dashboard → tap an app → set a Timer. Works the same way as iOS App Limits.',
+      action:'Open Settings →',
+      btn:()=>window.location.href='intent:#Intent;action=android.settings.DIGITAL_WELLBEING;end',
+      os:'Android',
+    },
+  ];
+
+  return<div style={{display:'flex',flexDirection:'column',gap:'10px',marginBottom:'12px'}}>
+    {steps.map((s,i)=>{
+      const isDone=done[s.id];
+      return<div key={s.id} className="fade-up" style={{background:th.surf,border:`1px solid ${isDone?th.teal+'44':th.border}`,borderRadius:'13px',padding:'15px 16px',boxShadow:th.cardShadow,animationDelay:`${i*40}ms`,opacity:isDone?0.65:1,transition:'opacity 0.2s,border-color 0.2s'}}>
+        <div style={{display:'flex',gap:'12px',alignItems:'flex-start'}}>
+          {/* Step badge + done toggle */}
+          <button onClick={()=>mark(s.id)} style={{width:'32px',height:'32px',borderRadius:'50%',background:isDone?th.teal:th.text4,border:`1.5px solid ${isDone?th.teal:th.border}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,cursor:'pointer',transition:'all 0.2s ease'}}>
+            {isDone
+              ?<span style={{color:'#07111e',fontSize:'13px',fontWeight:700}}>✓</span>
+              :<span style={{color:th.label,fontSize:'10px',fontWeight:600,fontFamily:"'DM Mono',monospace"}}>{s.num}</span>
+            }
+          </button>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'4px'}}>
+              <p style={{color:th.text,fontSize:'14px',fontWeight:600}}>{s.title}</p>
+              <span style={{background:th.text4,border:`1px solid ${th.border}`,borderRadius:'8px',padding:'2px 7px',color:th.label,fontSize:'10px',letterSpacing:'0.04em'}}>{s.os}</span>
+            </div>
+            <p style={{color:th.text2,fontSize:'12px',lineHeight:1.55,marginBottom:'12px'}}>{s.desc}</p>
+            <button onClick={s.btn} className="btn-s" style={{background:th.tealBg||`${th.teal}18`,border:`1px solid ${th.teal}44`,borderRadius:'9px',padding:'8px 14px',color:th.teal,fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <span>⚙</span> {s.action}
+            </button>
+          </div>
+        </div>
+      </div>;
+    })}
+  </div>;
+}
+
 // ── ScreentimeScreen ──────────────────────────────────────────────────────────
 function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
   const earned=data.earnedMin||0;
@@ -735,18 +914,9 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
         </div>;
       })}
 
-      <div style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'13px',padding:'15px 17px',boxShadow:th.cardShadow}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'9px'}}>
-          <p style={{color:th.text,fontSize:'13px',fontWeight:500}}>enforce on device</p>
-          <button onClick={openScreenTimeSettings} className="btn-s" style={{background:th.tealBg,border:`1px solid ${th.teal}44`,borderRadius:'8px',padding:'5px 10px',color:th.teal,fontSize:'12px',fontWeight:600,cursor:'pointer'}}>⚙ open settings</button>
-        </div>
-        {[['📱','iPhone','Settings → Screen Time → App Limits'],['🤖','Android','Digital Wellbeing → App Timers']].map(([ic,d,s])=>(
-          <div key={d} style={{display:'flex',gap:'10px',alignItems:'flex-start',marginBottom:'5px'}}>
-            <span style={{fontSize:'14px',flexShrink:0}}>{ic}</span>
-            <p style={{color:th.text2,fontSize:'12px',lineHeight:1.5}}><span style={{color:th.text,fontWeight:500}}>{d}:</span> {s}</p>
-          </div>
-        ))}
-      </div>
+      {/* Step-by-step setup guide */}
+      <p style={{color:th.label,fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',fontWeight:500,marginBottom:'10px'}}>SETUP GUIDE</p>
+      <ScreenTimeSetup th={th} appEnabled={appEnabled} appLimits={appLimits}/>
     </div>
   </div>;
 }
@@ -954,15 +1124,13 @@ function App(){
         <HomeScreen th={th} data={data} onPick={handlePickTech} onGate={handleGate} onReminder={()=>setShowRem(true)} sound={sound} onSound={()=>setSound(s=>!s)} onTheme={toggleTheme} theme={theme} isPrem={isPrem} selTech={selTech} onSelTech={setSelTech}/>
       ):tab==='stats'?(
         <StatsScreen th={th} data={data}/>
-      ):tab==='learn'?(
-        <LearnScreen th={th} onStartPractice={t=>{setSelTech(t);setTab('home');}}/>
       ):(
         <ScreentimeScreen th={th} data={data} isPrem={isPrem} onGate={handleGate} onUpdate={update}/>
       )}
     </div>
 
     {!tech&&<div style={{background:th.navBg,backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',borderTop:`1px solid ${th.border}`,padding:'10px 0 28px',display:'flex',justifyContent:'space-around',position:'relative',zIndex:10,transition:switching?'background 0.38s ease':'none'}}>
-      {[{id:'home',label:'home',Icon:HomeIcon},{id:'stats',label:'stats',Icon:ChartIcon},{id:'learn',label:'learn',Icon:BookIcon},{id:'screentime',label:'time',Icon:ShieldIcon}].map(({id,label,Icon})=>(
+      {[{id:'home',label:'home',Icon:HomeIcon},{id:'stats',label:'stats',Icon:ChartIcon},{id:'screentime',label:'time',Icon:ShieldIcon}].map(({id,label,Icon})=>(
         <button key={id} className="nav-btn" onClick={()=>setTab(id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',padding:'4px 18px',position:'relative'}}>
           {id==='screentime'&&!isPrem&&<span style={{position:'absolute',top:'0px',right:'10px',width:'6px',height:'6px',borderRadius:'50%',background:'#a48ee8'}}/>}
           <Icon c={nc(id)} a={tab===id}/>
