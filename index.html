@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Breathe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+body { font-family: 'DM Sans', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; overscroll-behavior: none; touch-action: manipulation; }
+button { font-family: inherit; outline: none; -webkit-tap-highlight-color: transparent; }
+::-webkit-scrollbar { display: none; }
+.scroll-area { overflow-y: auto; -webkit-overflow-scrolling: touch; height: 100%; }
+
+.theme-transition, .theme-transition * {
+  transition: background-color 0.38s ease, color 0.28s ease, border-color 0.32s ease, box-shadow 0.35s ease !important;
+}
+
+@keyframes fadeUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes scaleIn  { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:scale(1); } }
+@keyframes popIn    { 0%{opacity:0;transform:scale(0.82) translateY(12px);} 65%{transform:scale(1.04) translateY(-2px);} 100%{opacity:1;transform:scale(1) translateY(0);} }
+@keyframes slideUp  { from { opacity:0; transform:translateY(50px); } to { opacity:1; transform:translateY(0); } }
+@keyframes overlayIn { from{opacity:0} to{opacity:1} }
+@keyframes shimmer  { 0%{transform:translateX(-100%)} 100%{transform:translateX(250%)} }
+@keyframes floatDot { 0%{opacity:0.8;transform:translate(var(--tx),var(--ty)) scale(1)} 100%{opacity:0;transform:translate(var(--tx2),var(--ty2)) scale(0.3)} }
+@keyframes pulseRing { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.1);opacity:0.15} }
+@keyframes countPop  { 0%{opacity:0;transform:scale(0.7)} 60%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
+@keyframes streakPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.8;transform:scale(1.04)} }
+@keyframes calDotIn { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
+
+.fade-up   { animation: fadeUp  0.42s cubic-bezier(0.4,0,0.2,1) both; }
+.fade-down { animation: fadeDown 0.32s ease both; }
+.scale-in  { animation: scaleIn 0.30s cubic-bezier(0.4,0,0.2,1) both; }
+.pop-in    { animation: popIn   0.48s cubic-bezier(0.34,1.2,0.64,1) both; }
+.slide-up  { animation: slideUp 0.38s cubic-bezier(0.4,0,0.2,1) both; }
+
+.tech-card { cursor:pointer; transition: transform 0.22s cubic-bezier(0.4,0,0.2,1), box-shadow 0.22s ease; -webkit-tap-highlight-color:transparent; }
+.tech-card:hover  { transform: translateY(-4px) scale(1.01); box-shadow: 0 12px 32px rgba(0,0,0,0.25); }
+.tech-card:active { transform: scale(0.972); }
+
+.app-pill { cursor:pointer; transition: transform 0.18s ease, opacity 0.18s ease; }
+.app-pill:hover  { transform: translateY(-2px); }
+.app-pill:active { transform: scale(0.95); opacity:0.7; }
+
+.btn-p { cursor:pointer; transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease; }
+.btn-p:hover  { transform: translateY(-1px); }
+.btn-p:active { transform: scale(0.96); opacity:0.85; }
+
+.btn-s { cursor:pointer; transition: opacity 0.18s ease; }
+.btn-s:hover  { opacity: 0.65; }
+.btn-s:active { opacity: 0.4; }
+
+.nav-btn { -webkit-tap-highlight-color:transparent; transition: opacity 0.15s ease; }
+.nav-btn:active { opacity:0.4; }
+
+.shimmer-card { position:relative; overflow:hidden; }
+.shimmer-card::after {
+  content:''; position:absolute; top:0; bottom:0; left:-60%;
+  width:40%; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);
+  animation: shimmer 2.8s ease-in-out infinite;
+}
+
+.particle {
+  position:absolute; border-radius:50%; pointer-events:none;
+  animation: floatDot 1.5s ease-out forwards;
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ── Themes ───────────────────────────────────────────────────────────────────
+const THEMES = {
+  dark: {
+    id:'dark', bg:'#06101f', bg2:'#0b1830',
+    surf:'rgba(255,255,255,0.04)', surf2:'rgba(255,255,255,0.07)',
+    border:'rgba(255,255,255,0.07)', borderHi:'rgba(255,255,255,0.13)',
+    text:'rgba(255,255,255,0.92)', text2:'rgba(255,255,255,0.48)',
+    text3:'rgba(255,255,255,0.24)', text4:'rgba(255,255,255,0.10)',
+    accent:'#5ec4e0', accentBg:'rgba(94,196,224,0.12)',
+    navBg:'rgba(6,16,31,0.95)', overlay:'rgba(0,0,0,0.72)',
+    bloom:'rgba(94,196,224,0.05)', inputBg:'rgba(255,255,255,0.06)',
+    toggleTrack:'rgba(255,255,255,0.10)',
+  },
+  light: {
+    id:'light', bg:'#eef4ff', bg2:'#e2ecff',
+    surf:'rgba(255,255,255,0.88)', surf2:'rgba(255,255,255,1)',
+    border:'rgba(0,0,0,0.07)', borderHi:'rgba(0,0,0,0.14)',
+    text:'rgba(8,18,42,0.92)', text2:'rgba(8,18,42,0.52)',
+    text3:'rgba(8,18,42,0.30)', text4:'rgba(8,18,42,0.09)',
+    accent:'#0891b2', accentBg:'rgba(8,145,178,0.10)',
+    navBg:'rgba(238,244,255,0.96)', overlay:'rgba(0,0,0,0.52)',
+    bloom:'rgba(8,145,178,0.06)', inputBg:'rgba(0,0,0,0.04)',
+    toggleTrack:'rgba(0,0,0,0.10)',
+  },
+};
+
+// ── Techniques ───────────────────────────────────────────────────────────────
+const TECHNIQUES = [
+  { id:'box',      name:'Box Breathing',   tag:'Focus',  earnRate:3,   accent:'#5ec4e0', tagBg:'rgba(94,196,224,0.12)',  bg:'linear-gradient(145deg,#0a1e40,#0b2955)', desc:'Four equal sides. Navy SEALs use this to stay sharp under pressure.',   phases:[{l:'Inhale',d:4},{l:'Hold',d:4},{l:'Exhale',d:4},{l:'Hold',d:4}] },
+  { id:'478',      name:'4-7-8 Breathing', tag:'Sleep',  earnRate:3.5, accent:'#a48ee8', tagBg:'rgba(164,142,232,0.12)', bg:'linear-gradient(145deg,#150e3a,#1f1350)', desc:'Ancient pranayama. Extended exhale calms the nervous system for deep rest.', phases:[{l:'Inhale',d:4},{l:'Hold',d:7},{l:'Exhale',d:8}] },
+  { id:'calm',     name:'Deep Calm',       tag:'Relax',  earnRate:2.5, accent:'#4dbfae', tagBg:'rgba(77,191,174,0.12)',  bg:'linear-gradient(145deg,#082624,#0e3432)', desc:'Gentle 2-1-4-1 rhythm. Longer exhale activates the vagus nerve instantly.', phases:[{l:'Inhale',d:2},{l:'Hold',d:1},{l:'Exhale',d:4},{l:'Hold',d:1}] },
+  { id:'energize', name:'Energize',        tag:'Energy', earnRate:2,   accent:'#e8a23c', tagBg:'rgba(232,162,60,0.12)',  bg:'linear-gradient(145deg,#281600,#3c2000)', desc:'Power breathing 6-2. Floods the brain with oxygen for instant clarity.', phases:[{l:'Inhale',d:6},{l:'Exhale',d:2}] },
+];
+
+const APPS = [
+  { id:'instagram', name:'Instagram', emoji:'📸', color:'#E1306C', limit:30 },
+  { id:'tiktok',    name:'TikTok',    emoji:'🎵', color:'#111',    limit:30 },
+  { id:'youtube',   name:'YouTube',   emoji:'▶️', color:'#FF0000', limit:60 },
+  { id:'twitter',   name:'X',         emoji:'✕',  color:'#1D9BF0', limit:30 },
+];
+
+// ── Audio ────────────────────────────────────────────────────────────────────
+let _ctx=null, _ag=null, _ao=[];
+const getCtx = () => { if(!_ctx) _ctx=new(window.AudioContext||window.webkitAudioContext)(); if(_ctx.state==='suspended') _ctx.resume(); return _ctx; };
+function playBell(freq) {
+  try {
+    const ctx=getCtx(), t=ctx.currentTime, osc=ctx.createOscillator(), env=ctx.createGain();
+    osc.type='sine'; osc.frequency.setValueAtTime(freq,t); osc.frequency.exponentialRampToValueAtTime(freq*0.72,t+1.6);
+    env.gain.setValueAtTime(0,t); env.gain.linearRampToValueAtTime(0.11,t+0.04); env.gain.exponentialRampToValueAtTime(0.001,t+1.9);
+    osc.connect(env); env.connect(ctx.destination); osc.start(t); osc.stop(t+1.9);
+  } catch(e) {}
+}
+const phaseSound = l => playBell({Inhale:528,Hold:396,Exhale:432}[l]||528);
+function startAmbient() {
+  try {
+    stopAmbient(); const ctx=getCtx(), m=ctx.createGain();
+    m.gain.setValueAtTime(0,ctx.currentTime); m.gain.linearRampToValueAtTime(0.03,ctx.currentTime+2.5);
+    m.connect(ctx.destination); _ag=m; _ao=[];
+    [[110,1],[220.12,0.28],[165.06,0.18]].forEach(([f,g])=>{
+      const o=ctx.createOscillator(), gn=ctx.createGain();
+      o.type='sine'; o.frequency.value=f; gn.gain.value=g; o.connect(gn); gn.connect(m); o.start(); _ao.push(o);
+    });
+  } catch(e) {}
+}
+function stopAmbient() {
+  try { if(_ag&&_ctx){ _ag.gain.linearRampToValueAtTime(0,_ctx.currentTime+1.2); const o=[..._ao]; setTimeout(()=>o.forEach(x=>{try{x.stop();}catch(e){}}),1400); _ao=[]; _ag=null; } } catch(e) {}
+}
+
+// ── Storage ──────────────────────────────────────────────────────────────────
+const SK = 'breathe_v5';
+const DEF = { sessions:[], totalMin:0, earnedMin:0, appEarned:{}, appLimits:{}, premium:{paid:false,trial:false,trialStart:null}, reminder:{enabled:false,time:'08:00'}, theme:'dark' };
+const loadData = () => { try { return {...DEF,...JSON.parse(localStorage.getItem(SK))}; } catch(e) { return {...DEF}; } };
+const saveData = d => { try { localStorage.setItem(SK,JSON.stringify(d)); } catch(e) {} };
+const todayStr = () => new Date().toISOString().slice(0,10);
+
+function calcStreak(sessions) {
+  const days=[...new Set(sessions.map(s=>s.date))].sort().reverse();
+  if(!days.length||days[0]!==todayStr()) return 0;
+  let n=1;
+  for(let i=1;i<days.length;i++) { if(Math.round((new Date(days[i-1])-new Date(days[i]))/86400000)===1) n++; else break; }
+  return n;
+}
+function last7(sessions) {
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-(6-i));
+    const date=d.toISOString().slice(0,10);
+    return { date, label:d.toLocaleDateString('en',{weekday:'narrow'}), isToday:i===6, count:sessions.filter(s=>s.date===date).length };
+  });
+}
+const isPremActive = p => p.paid || (p.trial && p.trialStart && (Date.now()-new Date(p.trialStart))/86400000 < 7);
+const trialLeft   = p => !p.trial||!p.trialStart ? 0 : Math.max(0,7-Math.floor((Date.now()-new Date(p.trialStart))/86400000));
+
+// ── Orb helpers ──────────────────────────────────────────────────────────────
+function orbProps(label, dur, lastDir) {
+  if(label==='Inhale') return {scale:1.26,glow:0.72,dur};
+  if(label==='Exhale') return {scale:0.68,glow:0.10,dur};
+  return lastDir==='in' ? {scale:1.26,glow:0.50,dur:0.45} : {scale:0.68,glow:0.07,dur:0.45};
+}
+function glowShadow(accent,g) {
+  const h=n=>Math.max(0,Math.min(255,Math.round(n))).toString(16).padStart(2,'0');
+  return `0 0 ${Math.round(g*52)}px ${accent}${h(g*210)}, 0 0 ${Math.round(g*96)}px ${accent}${h(g*65)}`;
+}
+
+// ── Toggle ───────────────────────────────────────────────────────────────────
+function Toggle({on, onToggle, th}) {
+  return (
+    <div onClick={onToggle} style={{width:'44px',height:'26px',borderRadius:'13px',background:on?th.accent:th.toggleTrack,position:'relative',cursor:'pointer',flexShrink:0,transition:'background 0.25s ease'}}>
+      <div style={{position:'absolute',top:'3px',left:on?'21px':'3px',width:'20px',height:'20px',borderRadius:'50%',background:'#fff',transition:'left 0.25s cubic-bezier(0.34,1.3,0.64,1)',boxShadow:'0 1px 4px rgba(0,0,0,0.25)'}}/>
+    </div>
+  );
+}
+
+// ── PremiumModal ──────────────────────────────────────────────────────────────
+function PremiumModal({th, hasTrial, onClose, onTrial, onBuy}) {
+  return (
+    <div style={{position:'fixed',inset:0,background:th.overlay,display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:900,animation:'overlayIn 0.22s ease'}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'430px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'28px 28px 0 0',padding:'32px 24px 48px',animation:'slideUp 0.38s cubic-bezier(0.4,0,0.2,1)',border:`1px solid ${th.border}`,borderBottom:'none'}}>
+        <div style={{width:'40px',height:'4px',borderRadius:'2px',background:th.text4,margin:'0 auto 28px',opacity:0.7}}/>
+        <div style={{textAlign:'center',marginBottom:'24px'}}>
+          <div style={{width:'60px',height:'60px',borderRadius:'20px',margin:'0 auto 14px',background:'linear-gradient(135deg,#a48ee8,#5ec4e0)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'26px',boxShadow:'0 8px 28px rgba(164,142,232,0.4)'}}>✦</div>
+          <h2 style={{color:th.text,fontSize:'23px',fontWeight:700,letterSpacing:'-0.025em',marginBottom:'8px'}}>Unlock Premium</h2>
+          <p style={{color:th.text2,fontSize:'14px',lineHeight:1.55}}>Breathe your way to more time.<br/>Block apps. Earn screentime back.</p>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'24px'}}>
+          {[['⏱','Earn screentime — 1 min breath = 3 min screen'],['🔒','Block Instagram, TikTok, YouTube, X'],['🔔','Daily reminders & streak protection'],['📊','Session analytics & breathing insights']].map(([icon,text],i)=>(
+            <div key={i} style={{display:'flex',alignItems:'center',gap:'12px',background:th.surf,border:`1px solid ${th.border}`,borderRadius:'12px',padding:'12px 14px'}}>
+              <span style={{fontSize:'18px',flexShrink:0}}>{icon}</span>
+              <p style={{color:th.text,fontSize:'14px'}}>{text}</p>
+            </div>
+          ))}
+        </div>
+        {!hasTrial && (
+          <button className="btn-p" onClick={onTrial} style={{width:'100%',background:'linear-gradient(135deg,#a48ee8,#5ec4e0)',border:'none',borderRadius:'16px',padding:'17px',color:'#fff',fontSize:'16px',fontWeight:700,marginBottom:'10px',boxShadow:'0 6px 24px rgba(164,142,232,0.42)'}}>
+            Start 7-Day Free Trial
+          </button>
+        )}
+        <button className="btn-p" onClick={onBuy} style={{width:'100%',background:hasTrial?'linear-gradient(135deg,#a48ee8,#5ec4e0)':th.surf,border:hasTrial?'none':`1px solid ${th.border}`,borderRadius:'16px',padding:'16px',color:hasTrial?'#fff':th.text2,fontSize:'15px',fontWeight:600,marginBottom:'12px',boxShadow:hasTrial?'0 6px 24px rgba(164,142,232,0.42)':'none'}}>
+          {hasTrial ? 'Upgrade Now — $4.99/mo' : '$4.99 / month  ·  $29.99 / year'}
+        </button>
+        <p style={{color:th.text3,fontSize:'11px',textAlign:'center'}}>Cancel anytime · No ads · Secure payment</p>
+      </div>
+    </div>
+  );
+}
+
+// ── ReminderSheet ─────────────────────────────────────────────────────────────
+function ReminderSheet({th, reminder, onSave, onClose}) {
+  const [on, setOn]   = useState(reminder.enabled);
+  const [t,  setTime] = useState(reminder.time||'08:00');
+  const save = () => {
+    if(on) { Notification.requestPermission().then(p=>{ onSave({enabled:p==='granted',time:t}); }); }
+    else onSave({enabled:false,time:t});
+  };
+  return (
+    <div style={{position:'fixed',inset:0,background:th.overlay,display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:900,animation:'overlayIn 0.22s ease'}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'430px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'28px 28px 0 0',padding:'28px 24px 48px',animation:'slideUp 0.38s cubic-bezier(0.4,0,0.2,1)',border:`1px solid ${th.border}`,borderBottom:'none'}}>
+        <div style={{width:'40px',height:'4px',borderRadius:'2px',background:th.text4,margin:'0 auto 24px',opacity:0.7}}/>
+        <h3 style={{color:th.text,fontSize:'20px',fontWeight:700,marginBottom:'6px'}}>Daily Reminder</h3>
+        <p style={{color:th.text2,fontSize:'14px',marginBottom:'22px'}}>Get notified each day to breathe.</p>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:th.surf,border:`1px solid ${th.border}`,borderRadius:'14px',padding:'16px 18px',marginBottom:'12px'}}>
+          <div>
+            <p style={{color:th.text,fontSize:'15px',fontWeight:500}}>Enable reminder</p>
+            <p style={{color:th.text2,fontSize:'12px'}}>Requires notification permission</p>
+          </div>
+          <Toggle on={on} onToggle={()=>setOn(x=>!x)} th={th}/>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:th.surf,border:`1px solid ${th.border}`,borderRadius:'14px',padding:'16px 18px',marginBottom:'24px',opacity:on?1:0.4,transition:'opacity 0.2s'}}>
+          <p style={{color:th.text,fontSize:'15px',fontWeight:500}}>Time</p>
+          <input type="time" value={t} onChange={e=>setTime(e.target.value)} disabled={!on} style={{background:'none',border:'none',color:th.accent,fontSize:'16px',fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}/>
+        </div>
+        <button className="btn-p" onClick={save} style={{width:'100%',background:th.accent,color:'#06101f',border:'none',borderRadius:'14px',padding:'16px',fontSize:'16px',fontWeight:700}}>Save</button>
+      </div>
+    </div>
+  );
+}
+
+// ── SessionComplete ───────────────────────────────────────────────────────────
+function SessionComplete({th, tech, cycles, minutes, onContinue}) {
+  const earned = Math.round(minutes * tech.earnRate);
+  return (
+    <div style={{position:'fixed',inset:0,background:th.overlay,display:'flex',alignItems:'center',justifyContent:'center',zIndex:500,padding:'24px',animation:'overlayIn 0.28s ease'}}>
+      <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'360px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'24px',padding:'32px 24px',border:`1px solid ${th.border}`,animation:'popIn 0.5s cubic-bezier(0.34,1.2,0.64,1)',textAlign:'center'}}>
+        <div style={{width:'64px',height:'64px',borderRadius:'50%',margin:'0 auto 18px',background:`linear-gradient(135deg,${tech.accent}22,${tech.accent}44)`,border:`2px solid ${tech.accent}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'26px'}}>✦</div>
+        <h3 style={{color:th.text,fontSize:'22px',fontWeight:700,marginBottom:'5px'}}>Session Complete</h3>
+        <p style={{color:th.text2,fontSize:'14px',marginBottom:'22px'}}>{tech.name}</p>
+        <div style={{display:'flex',gap:'10px',marginBottom:'22px'}}>
+          {[{l:'Cycles',v:cycles||0},{l:'Minutes',v:minutes},{l:'Earned',v:`+${earned}m`,hi:true}].map(s=>(
+            <div key={s.l} style={{flex:1,background:th.surf,borderRadius:'14px',padding:'14px 8px',border:`1px solid ${th.border}`}}>
+              <p style={{color:th.text3,fontSize:'10px',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'4px'}}>{s.l}</p>
+              <p style={{color:s.hi?tech.accent:th.text,fontSize:'22px',fontWeight:700,letterSpacing:'-0.02em'}}>{s.v}</p>
+            </div>
+          ))}
+        </div>
+        <button className="btn-p" onClick={onContinue} style={{width:'100%',background:tech.accent,color:'#06101f',border:'none',borderRadius:'14px',padding:'15px',fontSize:'16px',fontWeight:700,boxShadow:`0 4px 20px ${tech.accent}44`}}>Continue</button>
+      </div>
+    </div>
+  );
+}
+
+// ── SessionScreen ─────────────────────────────────────────────────────────────
+function SessionScreen({th, tech, onDone, onBack, sound}) {
+  const [running,  setRunning]  = useState(false);
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  const [count,    setCount]    = useState(tech.phases[0].d);
+  const [cycles,   setCycles]   = useState(0);
+  const [lastDir,  setLastDir]  = useState('neutral');
+  const [particles,setParticles]= useState([]);
+  const [showComp, setShowComp] = useState(false);
+  const [sessMin,  setSessMin]  = useState(1);
+  const startRef = useRef(null);
+  const pid = useRef(0);
+
+  const phase = tech.phases[phaseIdx];
+  const orb   = running ? orbProps(phase.l, phase.d, lastDir) : {scale:0.82,glow:0.14,dur:0.9};
+  const isHold= running && phase.l === 'Hold';
+
+  // particles on inhale
+  useEffect(() => {
+    if(!running || phase.l !== 'Inhale') return;
+    const iv = setInterval(() => {
+      const id = ++pid.current;
+      const angle = Math.random()*360;
+      const r = 90+Math.random()*35;
+      const tx  = `${Math.cos(angle*Math.PI/180)*r}px`;
+      const ty  = `${Math.sin(angle*Math.PI/180)*r}px`;
+      const tx2 = `${Math.cos(angle*Math.PI/180)*(r+30)}px`;
+      const ty2 = `${Math.sin(angle*Math.PI/180)*(r+30)}px`;
+      const sz  = 2+Math.random()*3;
+      setParticles(p=>[...p.slice(-10),{id,tx,ty,tx2,ty2,sz}]);
+      setTimeout(()=>setParticles(p=>p.filter(x=>x.id!==id)), 1600);
+    }, 380);
+    return ()=>clearInterval(iv);
+  }, [running, phaseIdx]);
+
+  // phase engine
+  useEffect(() => {
+    if(!running) return;
+    const p = tech.phases[phaseIdx];
+    if(p.l==='Inhale') setLastDir('in');
+    else if(p.l==='Exhale') setLastDir('out');
+    if(sound) phaseSound(p.l);
+    setCount(p.d);
+    let c=p.d;
+    const iv=setInterval(()=>{c--;setCount(c);if(c<=0)clearInterval(iv);},1000);
+    const tm=setTimeout(()=>{
+      const next=(phaseIdx+1)%tech.phases.length;
+      if(next===0) setCycles(n=>n+1);
+      setPhaseIdx(next);
+    }, p.d*1000);
+    return ()=>{clearInterval(iv);clearTimeout(tm);};
+  }, [phaseIdx, running]);
+
+  useEffect(()=>()=>stopAmbient(),[]);
+
+  const handleStart = () => { startRef.current=Date.now(); setRunning(true); if(sound) startAmbient(); };
+  const handleEnd   = () => {
+    stopAmbient(); setRunning(false);
+    const m=Math.max(1,Math.round((Date.now()-(startRef.current||Date.now()))/60000));
+    setSessMin(m); setShowComp(true);
+  };
+  const handleContinue = () => { setShowComp(false); onDone(tech.id, sessMin, cycles); };
+
+  return (
+    <div className="scale-in" style={{height:'100%',display:'flex',flexDirection:'column',background:th.bg}}>
+      {/* Top bar */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'50px 20px 12px'}}>
+        <button onClick={onBack} style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'10px',color:th.text2,padding:'8px 14px',fontSize:'14px',cursor:'pointer'}}>← Back</button>
+        <p style={{color:tech.accent,fontSize:'12px',fontWeight:600,letterSpacing:'0.07em',textTransform:'uppercase'}}>{tech.name}</p>
+        <div style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'10px',color:th.text2,padding:'8px 14px',fontSize:'13px',minWidth:'56px',textAlign:'center'}}>
+          {running ? <span><span style={{color:tech.accent,fontWeight:700}}>{cycles+1}</span><span style={{fontSize:'10px',opacity:0.6}}> cyc</span></span> : '—'}
+        </div>
+      </div>
+
+      {/* Orb area */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}}>
+        {/* bloom */}
+        <div style={{position:'absolute',width:'360px',height:'360px',borderRadius:'50%',background:`radial-gradient(circle,${tech.accent}07 0%,transparent 70%)`,transform:`scale(${running?orb.scale*1.55:1.1})`,transition:`transform ${orb.dur}s ease`,pointerEvents:'none'}}/>
+        {/* rings */}
+        {[[290,1.16,0.16],[240,1.07,0.28]].map(([sz,sm,om],i)=>(
+          <div key={i} style={{position:'absolute',width:`${sz}px`,height:`${sz}px`,borderRadius:'50%',border:`1px solid ${tech.accent}`,opacity:running?orb.glow*om:0.04,transform:`scale(${running?orb.scale*sm:1})`,transition:`opacity ${isHold?0.45:orb.dur}s ease,transform ${isHold?0.45:orb.dur}s ease`,pointerEvents:'none'}}/>
+        ))}
+        {/* particles */}
+        {particles.map(p=>(
+          <div key={p.id} className="particle" style={{width:`${p.sz}px`,height:`${p.sz}px`,background:tech.accent,opacity:0.65,'--tx':p.tx,'--ty':p.ty,'--tx2':p.tx2,'--ty2':p.ty2,top:`calc(50% - ${p.sz/2}px)`,left:`calc(50% - ${p.sz/2}px)`}}/>
+        ))}
+        {/* main orb */}
+        <div style={{width:'200px',height:'200px',borderRadius:'50%',border:`1.5px solid ${tech.accent}${running?'cc':'40'}`,background:`radial-gradient(circle at 38% 32%,${tech.accent}26,${tech.accent}07 55%,transparent)`,transform:`scale(${orb.scale})`,transition:`transform ${isHold?0.45:orb.dur}s cubic-bezier(0.4,0,0.2,1),box-shadow ${isHold?0.45:orb.dur}s ease,border-color 0.4s ease`,boxShadow:glowShadow(tech.accent,orb.glow),display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',position:'relative',zIndex:1}}>
+          <p style={{fontSize:'12px',fontWeight:500,letterSpacing:'0.14em',textTransform:'uppercase',color:'rgba(255,255,255,0.5)',marginBottom:running?'8px':0,transition:'all 0.3s ease'}}>
+            {running ? phase.l : 'Ready'}
+          </p>
+          {running && (
+            <p key={count} style={{fontSize:'46px',fontWeight:300,color:tech.accent,letterSpacing:'-0.04em',lineHeight:1,animation:'countPop 0.3s cubic-bezier(0.34,1.3,0.64,1) both'}}>
+              {count}
+            </p>
+          )}
+        </div>
+        {/* phase dots */}
+        {running && (
+          <div style={{marginTop:'28px',display:'flex',gap:'8px',alignItems:'center'}}>
+            {tech.phases.map((p,i)=>(
+              <div key={i} style={{width:i===phaseIdx?'28px':'7px',height:'7px',borderRadius:'4px',background:i===phaseIdx?tech.accent:'rgba(255,255,255,0.12)',transition:'all 0.38s cubic-bezier(0.34,1.3,0.64,1)'}}/>
+            ))}
+          </div>
+        )}
+        {/* phase labels */}
+        {running && (
+          <div style={{marginTop:'18px',display:'flex',gap:'20px'}}>
+            {tech.phases.map((p,i)=>(
+              <div key={i} style={{textAlign:'center',opacity:i===phaseIdx?1:0.22,transition:'opacity 0.35s ease,transform 0.35s ease',transform:i===phaseIdx?'translateY(0)':'translateY(2px)'}}>
+                <p style={{color:'rgba(255,255,255,0.85)',fontSize:'11px',marginBottom:'2px'}}>{p.l}</p>
+                <p style={{color:tech.accent,fontSize:'10px'}}>{p.d}s</p>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* cycles done badge */}
+        {running && cycles > 0 && (
+          <div className="fade-down" style={{marginTop:'18px'}}>
+            <div style={{background:`${tech.accent}18`,border:`1px solid ${tech.accent}40`,borderRadius:'20px',padding:'5px 14px',display:'inline-flex',alignItems:'center',gap:'6px'}}>
+              <span style={{color:tech.accent,fontSize:'12px',fontWeight:600}}>✦ {cycles} cycle{cycles!==1?'s':''} complete</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom */}
+      <div style={{padding:'0 24px 52px',display:'flex',flexDirection:'column',alignItems:'center',gap:'14px'}}>
+        {!running && !showComp && (
+          <button className="btn-p" onClick={handleStart} style={{background:tech.accent,color:'#06101f',border:'none',borderRadius:'50px',padding:'17px 56px',fontSize:'16px',fontWeight:700,letterSpacing:'-0.01em',boxShadow:`0 6px 28px ${tech.accent}44`}}>Begin</button>
+        )}
+        {running && !showComp && (
+          <button className="btn-s" onClick={handleEnd} style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'50px',color:th.text2,padding:'14px 36px',fontSize:'14px'}}>End Session</button>
+        )}
+      </div>
+      {showComp && <SessionComplete th={th} tech={tech} cycles={cycles} minutes={sessMin} onContinue={handleContinue}/>}
+    </div>
+  );
+}
+
+// ── TechCard ──────────────────────────────────────────────────────────────────
+function TechCard({t, th, delay, onPick}) {
+  return (
+    <button className="tech-card fade-up" onClick={onPick} style={{background:t.bg,border:'1px solid rgba(255,255,255,0.06)',borderRadius:'18px',padding:'18px 20px',textAlign:'left',width:'100%',position:'relative',overflow:'hidden',animationDelay:`${delay}ms`}}>
+      <div style={{position:'absolute',top:'-18px',right:'-18px',width:'72px',height:'72px',borderRadius:'50%',background:t.accent,opacity:0.14,filter:'blur(20px)',pointerEvents:'none'}}/>
+      <div style={{display:'flex',gap:'3px',marginBottom:'14px',alignItems:'center'}}>
+        {t.phases.map((p,i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',gap:'2px'}}>
+            {i>0 && <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'rgba(255,255,255,0.15)'}}/>}
+            <div style={{height:'3px',borderRadius:'2px',width:`${Math.min(48,p.d*5)}px`,background:t.accent,opacity:0.45}}/>
+          </div>
+        ))}
+        <span style={{color:'rgba(255,255,255,0.25)',fontSize:'10px',marginLeft:'5px'}}>{t.phases.map(p=>p.d).join('–')}</span>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+        <div style={{flex:1,paddingRight:'12px'}}>
+          <span style={{display:'inline-block',background:t.tagBg,color:t.accent,fontSize:'10px',fontWeight:700,letterSpacing:'0.07em',textTransform:'uppercase',padding:'3px 9px',borderRadius:'20px',marginBottom:'8px'}}>{t.tag}</span>
+          <h3 style={{color:'rgba(255,255,255,0.92)',fontSize:'16px',fontWeight:600,marginBottom:'5px',letterSpacing:'-0.01em'}}>{t.name}</h3>
+          <p style={{color:'rgba(255,255,255,0.38)',fontSize:'13px',lineHeight:1.55}}>{t.desc}</p>
+        </div>
+        <div style={{width:'32px',height:'32px',flexShrink:0,borderRadius:'50%',border:`1px solid ${t.accent}40`,display:'flex',alignItems:'center',justifyContent:'center',marginTop:'2px'}}>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5L6.5 5 3 8.5" stroke={t.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ── HomeScreen ────────────────────────────────────────────────────────────────
+function HomeScreen({th, data, onPick, onGate, onReminder, sound, onSound, onTheme, theme, isPrem}) {
+  const streak     = calcStreak(data.sessions);
+  const todayCount = data.sessions.filter(s=>s.date===todayStr()).length;
+  const h          = new Date().getHours();
+  const greet      = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const earned     = data.earnedMin||0;
+
+  return (
+    <div className="scroll-area" style={{paddingBottom:'88px'}}>
+      <div style={{padding:'0 20px'}}>
+        {/* Header */}
+        <div className="fade-up" style={{paddingTop:'52px',marginBottom:'24px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+            <div>
+              <p style={{color:th.text3,fontSize:'11px',letterSpacing:'0.1em',textTransform:'uppercase',fontWeight:500,marginBottom:'10px'}}>
+                {new Date().toLocaleDateString('en',{weekday:'long',month:'short',day:'numeric'})}
+              </p>
+              <h1 style={{fontSize:'26px',fontWeight:300,letterSpacing:'-0.025em',lineHeight:1.3,color:th.text}}>
+                {greet},<br/><span style={{fontWeight:700}}>take a breath.</span>
+              </h1>
+            </div>
+            <div style={{display:'flex',gap:'8px',marginTop:'6px'}}>
+              <button onClick={onTheme} style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'10px',padding:'9px 11px',fontSize:'16px',cursor:'pointer',lineHeight:1,transition:'background 0.3s ease'}}>
+                {theme==='dark'?'☀️':'🌙'}
+              </button>
+              <button onClick={onSound} style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'10px',padding:'9px 11px',fontSize:'16px',cursor:'pointer',lineHeight:1,color:sound?th.accent:th.text3,transition:'color 0.2s ease'}}>
+                {sound?'🔊':'🔇'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="fade-up" style={{display:'flex',gap:'10px',marginBottom:'18px',animationDelay:'55ms'}}>
+          {[
+            {label:'Streak', val:streak>0?`${streak}d`:'—', icon:streak>=3?'🔥':streak>0?'✦':'—', color:streak>0?'#e8a23c':null},
+            {label:'Today',  val:`${todayCount}/3`, icon:'◎', color:todayCount>=3?'#4dbfae':null},
+            {label:'Total',  val:data.sessions.length, icon:'↑', color:null},
+          ].map(s=>(
+            <div key={s.label} style={{flex:1,background:th.surf,border:`1px solid ${th.border}`,borderRadius:'14px',padding:'14px 12px',transition:'background 0.3s ease'}}>
+              <p style={{color:th.text3,fontSize:'10px',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'5px'}}>{s.label}</p>
+              <p style={{color:s.color||th.text,fontSize:'16px',fontWeight:600,letterSpacing:'-0.01em'}}>
+                {s.icon!=='—'&&<span style={{marginRight:'3px',fontSize:'13px'}}>{s.icon}</span>}{s.val}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Earn screentime card */}
+        <div className="fade-up shimmer-card" style={{marginBottom:'12px',animationDelay:'90ms',borderRadius:'18px'}}>
+          <div onClick={()=>isPrem?null:onGate()} style={{background:isPrem?`linear-gradient(135deg,rgba(164,142,232,0.14),rgba(94,196,224,0.09))`:`linear-gradient(135deg,rgba(164,142,232,0.07),rgba(94,196,224,0.04))`,border:`1px solid ${isPrem?'rgba(164,142,232,0.28)':'rgba(164,142,232,0.14)'}`,borderRadius:'18px',padding:'18px 20px',cursor:isPrem?'default':'pointer',position:'relative',overflow:'hidden'}}>
+            {!isPrem && <span style={{position:'absolute',top:'12px',right:'14px',background:'linear-gradient(135deg,#a48ee8,#5ec4e0)',borderRadius:'20px',padding:'3px 10px',fontSize:'10px',fontWeight:700,color:'#fff',letterSpacing:'0.04em'}}>PREMIUM</span>}
+            <div style={{display:'flex',alignItems:'center',gap:'14px'}}>
+              <div style={{width:'44px',height:'44px',borderRadius:'14px',flexShrink:0,background:'linear-gradient(135deg,rgba(164,142,232,0.22),rgba(94,196,224,0.18))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px'}}>⏱</div>
+              <div style={{flex:1}}>
+                <p style={{color:th.text,fontSize:'15px',fontWeight:600,marginBottom:'3px'}}>Earn Screentime by Breathing</p>
+                {isPrem
+                  ? <p style={{color:th.text2,fontSize:'13px'}}><span style={{color:'#a48ee8',fontWeight:600}}>{earned} min</span> in bank · 1 min breath = 3 min screen</p>
+                  : <p style={{color:th.text2,fontSize:'13px'}}>Block Instagram. Breathe to earn it back. →</p>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick apps */}
+        <div className="fade-up" style={{marginBottom:'18px',animationDelay:'120ms'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
+            <p style={{color:th.text3,fontSize:'10px',letterSpacing:'0.1em',textTransform:'uppercase',fontWeight:600}}>Quick Apps</p>
+            {!isPrem && <button onClick={onGate} style={{background:'none',border:'none',color:th.accent,fontSize:'11px',fontWeight:600,cursor:'pointer'}}>Unlock →</button>}
+          </div>
+          <div style={{display:'flex',gap:'10px'}}>
+            {APPS.map((app,i)=>{
+              const appEarned = data.appEarned?.[app.id]||0;
+              return (
+                <div key={app.id} className="app-pill fade-up" onClick={onGate} style={{flex:1,background:th.surf,border:`1px solid ${th.border}`,borderRadius:'14px',padding:'12px 8px',textAlign:'center',animationDelay:`${120+i*35}ms`,opacity:isPrem?1:0.55,cursor:'pointer'}}>
+                  <span style={{fontSize:'20px',display:'block',marginBottom:'4px'}}>{app.emoji}</span>
+                  <p style={{color:th.text,fontSize:'10px',fontWeight:500,marginBottom:'3px'}}>{app.name}</p>
+                  <p style={{color:isPrem?'#a48ee8':th.text3,fontSize:'10px',fontWeight:isPrem?600:400}}>{isPrem?`${appEarned}m`:'—'}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Reminder */}
+        <div className="fade-up" onClick={onReminder} style={{display:'flex',alignItems:'center',gap:'14px',background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'14px 18px',marginBottom:'20px',cursor:'pointer',animationDelay:'155ms',transition:'background 0.2s ease'}}>
+          <span style={{fontSize:'22px'}}>🔔</span>
+          <div style={{flex:1}}>
+            <p style={{color:th.text,fontSize:'14px',fontWeight:500}}>Daily Reminder</p>
+            <p style={{color:th.text2,fontSize:'12px'}}>{data.reminder?.enabled?`Every day at ${data.reminder.time}`:'Set a daily breathing reminder'}</p>
+          </div>
+          <div style={{width:'8px',height:'8px',borderRadius:'50%',flexShrink:0,background:data.reminder?.enabled?'#4dbfae':th.text4,transition:'background 0.3s ease'}}/>
+        </div>
+
+        {/* Technique cards */}
+        <p style={{color:th.text3,fontSize:'10px',letterSpacing:'0.12em',textTransform:'uppercase',fontWeight:600,marginBottom:'12px'}}>Choose your practice</p>
+        <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+          {TECHNIQUES.map((t,i)=><TechCard key={t.id} t={t} th={th} delay={i*60} onPick={()=>onPick(t)}/>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── StatsScreen ───────────────────────────────────────────────────────────────
+function StatsScreen({th, data}) {
+  const streak     = calcStreak(data.sessions);
+  const todayCount = data.sessions.filter(s=>s.date===todayStr()).length;
+  const days       = last7(data.sessions);
+  const GOAL       = 3;
+  const techCounts = {};
+  data.sessions.forEach(s=>{techCounts[s.technique]=(techCounts[s.technique]||0)+1;});
+  const [favId] = Object.entries(techCounts).sort((a,b)=>b[1]-a[1])[0]||[];
+  const fav = TECHNIQUES.find(t=>t.id===favId);
+
+  return (
+    <div className="scroll-area fade-up" style={{paddingBottom:'88px'}}>
+      <div style={{padding:'0 20px'}}>
+        <div style={{paddingTop:'52px',marginBottom:'22px'}}>
+          <h2 style={{fontSize:'24px',fontWeight:300,letterSpacing:'-0.025em',color:th.text}}>Your <span style={{fontWeight:700}}>progress</span></h2>
+        </div>
+        {/* Streak */}
+        <div style={{background:'linear-gradient(135deg,rgba(232,162,60,0.09),rgba(200,100,0,0.04))',border:'1px solid rgba(232,162,60,0.16)',borderRadius:'20px',padding:'28px 24px',textAlign:'center',marginBottom:'12px'}}>
+          <div style={{fontSize:'40px',marginBottom:'6px'}}>{streak>=14?'🌟':streak>=7?'🔥':streak>=3?'✦':streak>0?'◎':'🌱'}</div>
+          <p style={{fontSize:'48px',fontWeight:300,color:'#e8a23c',letterSpacing:'-0.05em',lineHeight:1,margin:'0 0 6px',animation:streak>0?'streakPulse 3s ease infinite':'none'}}>{streak}</p>
+          <p style={{color:th.text2,fontSize:'14px'}}>{streak===0?'Start your streak today':`day streak${streak>=7?' 🌟':''}`}</p>
+        </div>
+        {/* Nums */}
+        <div style={{display:'flex',gap:'10px',marginBottom:'12px'}}>
+          {[{label:'Sessions',val:data.sessions.length},{label:'Minutes',val:data.totalMin}].map(s=>(
+            <div key={s.label} style={{flex:1,background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'18px',textAlign:'center'}}>
+              <p style={{color:th.text3,fontSize:'11px',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'4px'}}>{s.label}</p>
+              <p style={{fontSize:'32px',fontWeight:500,color:th.text,letterSpacing:'-0.04em'}}>{s.val}</p>
+            </div>
+          ))}
+        </div>
+        {/* Goal */}
+        <div style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'18px 20px',marginBottom:'12px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'12px'}}>
+            <p style={{color:th.text2,fontSize:'14px',fontWeight:500}}>Daily Goal</p>
+            <p style={{color:th.text3,fontSize:'14px'}}>{todayCount} / {GOAL}</p>
+          </div>
+          <div style={{height:'5px',background:th.text4,borderRadius:'3px'}}>
+            <div style={{height:'100%',borderRadius:'3px',width:`${Math.min(100,(todayCount/GOAL)*100)}%`,background:todayCount>=GOAL?'#4dbfae':'#5ec4e0',transition:'width 1s cubic-bezier(0.4,0,0.2,1)'}}/>
+          </div>
+        </div>
+        {/* Calendar */}
+        <div style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'18px 20px',marginBottom:'12px'}}>
+          <p style={{color:th.text2,fontSize:'13px',fontWeight:500,marginBottom:'16px'}}>Last 7 Days</p>
+          <div style={{display:'flex',justifyContent:'space-between'}}>
+            {days.map((d,i)=>(
+              <div key={d.date} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',animation:`calDotIn 0.4s ${i*45}ms cubic-bezier(0.34,1.3,0.64,1) both`}}>
+                <div style={{width:'36px',height:'36px',borderRadius:'50%',background:d.count>=GOAL?'#4dbfae':d.count>0?'rgba(77,191,174,0.22)':th.text4,border:d.isToday?`2px solid ${th.accent}80`:'2px solid transparent',display:'flex',alignItems:'center',justifyContent:'center',color:d.count>0?'#fff':th.text3,fontSize:'12px',fontWeight:d.count>0?600:400,transition:'all 0.3s ease'}}>
+                  {d.count>0?d.count:'·'}
+                </div>
+                <p style={{fontSize:'10px',color:d.isToday?`${th.accent}cc`:th.text3,fontWeight:d.isToday?600:400}}>{d.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Fav */}
+        {fav && (
+          <div style={{background:fav.bg,border:'1px solid rgba(255,255,255,0.06)',borderRadius:'16px',padding:'18px 20px',marginBottom:'12px',position:'relative',overflow:'hidden'}}>
+            <div style={{position:'absolute',top:'-12px',right:'-12px',width:'60px',height:'60px',borderRadius:'50%',background:fav.accent,opacity:0.12,filter:'blur(16px)'}}/>
+            <p style={{color:'rgba(255,255,255,0.3)',fontSize:'10px',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:'6px'}}>Top Practice</p>
+            <p style={{color:'#fff',fontSize:'17px',fontWeight:600}}>{fav.name}</p>
+            <p style={{color:fav.accent,fontSize:'13px',marginTop:'2px'}}>{techCounts[favId]} session{techCounts[favId]!==1?'s':''}</p>
+          </div>
+        )}
+        {data.sessions.length===0 && (
+          <div style={{textAlign:'center',padding:'36px 20px',color:th.text3,fontSize:'14px'}}>
+            <p style={{fontSize:'36px',marginBottom:'14px'}}>🌬️</p>Complete your first session<br/>to see progress here.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── ScreentimeScreen ──────────────────────────────────────────────────────────
+function ScreentimeScreen({th, data, isPrem, onGate, onUpdate}) {
+  const earned = data.earnedMin||0;
+  const handleUse = (appId, min) => {
+    const ae = {...(data.appEarned||{})};
+    if((ae[appId]||0)<min) return;
+    ae[appId]=(ae[appId]||0)-min;
+    onUpdate({...data, appEarned:ae});
+  };
+  if(!isPrem) return (
+    <div className="fade-up" style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 28px',textAlign:'center'}}>
+      <div style={{width:'72px',height:'72px',borderRadius:'24px',margin:'0 auto 20px',background:'linear-gradient(135deg,rgba(164,142,232,0.2),rgba(94,196,224,0.15))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'32px',border:'1px solid rgba(164,142,232,0.3)'}}>🔒</div>
+      <h3 style={{color:th.text,fontSize:'22px',fontWeight:700,marginBottom:'10px'}}>Premium Feature</h3>
+      <p style={{color:th.text2,fontSize:'15px',lineHeight:1.6,marginBottom:'28px'}}>Block Instagram, TikTok, YouTube and more. Earn screentime back by breathing. Real accountability.</p>
+      <button className="btn-p" onClick={onGate} style={{background:'linear-gradient(135deg,#a48ee8,#5ec4e0)',border:'none',borderRadius:'50px',padding:'16px 40px',color:'#fff',fontSize:'16px',fontWeight:700,boxShadow:'0 6px 24px rgba(164,142,232,0.38)'}}>Unlock Premium</button>
+    </div>
+  );
+  return (
+    <div className="scroll-area fade-up" style={{paddingBottom:'88px'}}>
+      <div style={{padding:'0 20px',paddingTop:'52px'}}>
+        <h2 style={{fontSize:'24px',fontWeight:300,letterSpacing:'-0.025em',color:th.text,marginBottom:'22px'}}>Screen<span style={{fontWeight:700}}>time</span></h2>
+        {/* Bank */}
+        <div style={{background:'linear-gradient(135deg,rgba(164,142,232,0.15),rgba(94,196,224,0.09))',border:'1px solid rgba(164,142,232,0.25)',borderRadius:'20px',padding:'24px',textAlign:'center',marginBottom:'16px'}}>
+          <p style={{color:'rgba(164,142,232,0.8)',fontSize:'11px',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:'6px'}}>Screentime Bank</p>
+          <p style={{fontSize:'48px',fontWeight:300,color:'#a48ee8',letterSpacing:'-0.05em',lineHeight:1,marginBottom:'4px'}}>{earned}</p>
+          <p style={{color:th.text2,fontSize:'14px'}}>minutes earned · 1 min breathing = 3 min screen</p>
+        </div>
+        <p style={{color:th.text3,fontSize:'10px',letterSpacing:'0.1em',textTransform:'uppercase',fontWeight:600,marginBottom:'12px'}}>App Allowances</p>
+        {APPS.map((app,i)=>{
+          const ae  = data.appEarned?.[app.id]||0;
+          const lim = data.appLimits?.[app.id]||app.limit;
+          return (
+            <div key={app.id} className="fade-up" style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'16px 18px',marginBottom:'10px',animationDelay:`${i*55}ms`}}>
+              <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'12px'}}>
+                <span style={{fontSize:'22px'}}>{app.emoji}</span>
+                <div style={{flex:1}}>
+                  <p style={{color:th.text,fontSize:'15px',fontWeight:600}}>{app.name}</p>
+                  <p style={{color:th.text2,fontSize:'12px'}}>Daily limit: {lim} min</p>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <p style={{color:'#a48ee8',fontSize:'18px',fontWeight:700}}>{ae}m</p>
+                  <p style={{color:th.text3,fontSize:'11px'}}>earned</p>
+                </div>
+              </div>
+              <div style={{height:'4px',background:th.text4,borderRadius:'2px',marginBottom:'10px'}}>
+                <div style={{height:'100%',width:`${Math.min(100,(ae/Math.max(lim,1))*100)}%`,borderRadius:'2px',background:'#a48ee8',transition:'width 0.8s ease'}}/>
+              </div>
+              <div style={{display:'flex',gap:'8px'}}>
+                {[15,30,60].map(m=>(
+                  <button key={m} onClick={()=>handleUse(app.id,m)} style={{flex:1,background:ae>=m?'rgba(164,142,232,0.12)':th.text4,border:`1px solid ${ae>=m?'rgba(164,142,232,0.3)':th.border}`,borderRadius:'8px',padding:'7px',color:ae>=m?'#a48ee8':th.text3,fontSize:'12px',fontWeight:600,cursor:'pointer',opacity:ae>=m?1:0.4,transition:'all 0.2s ease'}}>
+                    Use {m}m
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        <div style={{background:th.surf,border:`1px solid ${th.border}`,borderRadius:'16px',padding:'18px',textAlign:'center',marginTop:'4px'}}>
+          <p style={{fontSize:'22px',marginBottom:'8px'}}>📱</p>
+          <p style={{color:th.text,fontSize:'14px',fontWeight:500,marginBottom:'4px'}}>Enforce on Your Phone</p>
+          <p style={{color:th.text2,fontSize:'13px',lineHeight:1.6}}>iPhone: Settings → Screen Time → App Limits<br/>Android: Digital Wellbeing → App Timers<br/>Use your earned minutes as your daily budget.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Nav Icons ─────────────────────────────────────────────────────────────────
+const HomeIcon = ({c,a}) => <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 9L11 2.5 19 9v10.5a.5.5 0 01-.5.5h-5v-6H8.5v6h-5a.5.5 0 01-.5-.5V9z" stroke={c} strokeWidth="1.5" fill={a?`${c}15`:'none'} strokeLinejoin="round"/></svg>;
+const ChartIcon = ({c,a}) => <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="13" width="4" height="7" rx="1" stroke={c} strokeWidth="1.5" fill={a?`${c}15`:'none'}/><rect x="9" y="8" width="4" height="12" rx="1" stroke={c} strokeWidth="1.5" fill={a?`${c}15`:'none'}/><rect x="16" y="3" width="4" height="17" rx="1" stroke={c} strokeWidth="1.5" fill={a?`${c}15`:'none'}/></svg>;
+const ShieldIcon = ({c,a}) => <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2L4 5v6c0 4.4 3 8.5 7 9.4C15 19.5 18 15.4 18 11V5L11 2z" stroke={c} strokeWidth="1.5" fill={a?`${c}15`:'none'} strokeLinejoin="round"/><path d="M8 11l2 2 4-4" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  const [data,      setData]      = useState(loadData);
+  const [tab,       setTab]       = useState('home');
+  const [tech,      setTech]      = useState(null);
+  const [sound,     setSound]     = useState(true);
+  const [theme,     setTheme]     = useState(()=>loadData().theme||'dark');
+  const [switching, setSwitching] = useState(false);
+  const [showPrem,  setShowPrem]  = useState(false);
+  const [showRem,   setShowRem]   = useState(false);
+
+  const th    = THEMES[theme];
+  const isPrem = isPremActive(data.premium);
+  const dLeft  = trialLeft(data.premium);
+  const hasTr  = data.premium.trial && dLeft > 0;
+
+  const update = useCallback(d => { setData(d); saveData(d); }, []);
+
+  // Theme toggle with transition class
+  const toggleTheme = () => {
+    setSwitching(true);
+    const next = theme==='dark'?'light':'dark';
+    setTheme(next);
+    update({...data, theme:next});
+    setTimeout(()=>setSwitching(false), 420);
+  };
+
+  // Check reminder on load
+  useEffect(()=>{
+    if(!data.reminder?.enabled || Notification.permission!=='granted') return;
+    const [rh,rm]=(data.reminder.time||'08:00').split(':').map(Number);
+    const now=new Date();
+    if(Math.abs(now.getHours()*60+now.getMinutes()-rh*60-rm)<8) {
+      new Notification('🌬️ Time to breathe',{body:'Your daily breathing session is waiting.'});
+    }
+  },[]);
+
+  const handleGate = () => { if(!isPrem) setShowPrem(true); else setTab('screentime'); };
+
+  const handleTrial = () => {
+    const d={...data, premium:{...data.premium, trial:true, trialStart:new Date().toISOString()}};
+    update(d); setShowPrem(false); setTab('screentime');
+  };
+  const handleBuy = () => {
+    const d={...data, premium:{...data.premium, paid:true}};
+    update(d); setShowPrem(false); setTab('screentime');
+  };
+
+  const handleDone = (techId, minutes, cycles) => {
+    const t = TECHNIQUES.find(x=>x.id===techId);
+    const earned = Math.round(minutes*(t?.earnRate||3));
+    const ae = {...(data.appEarned||{})};
+    APPS.forEach(a=>{ ae[a.id]=(ae[a.id]||0)+Math.round(earned/APPS.length); });
+    const d={
+      ...data,
+      sessions:[...data.sessions,{date:todayStr(),technique:techId,duration:minutes,cycles}],
+      totalMin:data.totalMin+minutes,
+      earnedMin:(data.earnedMin||0)+earned,
+      appEarned:ae,
+    };
+    update(d); setTech(null); setTab('stats');
+  };
+
+  const nc = id => tab===id ? th.accent : th.text3;
+
+  return (
+    <div className={switching?'theme-transition':''} style={{height:'100dvh',maxWidth:'430px',margin:'0 auto',background:th.bg,display:'flex',flexDirection:'column',position:'relative',overflow:'hidden',transition:switching?'background 0.38s ease':'none'}}>
+      {/* ambient bloom */}
+      <div style={{position:'absolute',top:0,left:0,right:0,height:'40%',background:`radial-gradient(ellipse at 50% -10%,${th.bloom} 0%,transparent 70%)`,pointerEvents:'none',zIndex:0,transition:switching?'background 0.38s ease':'none'}}/>
+
+      {/* Trial banner */}
+      {hasTr && !tech && (
+        <div className="fade-down" style={{position:'absolute',top:0,left:0,right:0,zIndex:20,background:'linear-gradient(90deg,#a48ee8,#5ec4e0)',padding:'7px 16px',textAlign:'center'}}>
+          <p style={{color:'#fff',fontSize:'12px',fontWeight:600}}>✦ Free Trial — {dLeft} day{dLeft!==1?'s':''} remaining</p>
+        </div>
+      )}
+
+      {/* Screen */}
+      <div style={{flex:1,overflow:'hidden',position:'relative',zIndex:1,marginTop:hasTr&&!tech?'30px':0}}>
+        {tech ? (
+          <SessionScreen th={th} tech={tech} onDone={handleDone} onBack={()=>setTech(null)} sound={sound}/>
+        ) : tab==='home' ? (
+          <HomeScreen th={th} data={data} onPick={setTech} onGate={handleGate} onReminder={()=>setShowRem(true)} sound={sound} onSound={()=>setSound(s=>!s)} onTheme={toggleTheme} theme={theme} isPrem={isPrem}/>
+        ) : tab==='stats' ? (
+          <StatsScreen th={th} data={data}/>
+        ) : (
+          <ScreentimeScreen th={th} data={data} isPrem={isPrem} onGate={handleGate} onUpdate={update}/>
+        )}
+      </div>
+
+      {/* Bottom nav */}
+      {!tech && (
+        <div style={{background:th.navBg,backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',borderTop:`1px solid ${th.border}`,padding:'10px 0 28px',display:'flex',justifyContent:'space-around',position:'relative',zIndex:10,transition:switching?'background 0.38s ease':'none'}}>
+          {[
+            {id:'home',       label:'Home',      Icon:HomeIcon},
+            {id:'stats',      label:'Stats',     Icon:ChartIcon},
+            {id:'screentime', label:'Screentime',Icon:ShieldIcon},
+          ].map(({id,label,Icon})=>(
+            <button key={id} className="nav-btn" onClick={()=>setTab(id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',padding:'4px 18px',position:'relative'}}>
+              {id==='screentime'&&!isPrem&&<span style={{position:'absolute',top:'0px',right:'10px',width:'7px',height:'7px',borderRadius:'50%',background:'#a48ee8'}}/>}
+              <Icon c={nc(id)} a={tab===id}/>
+              <span style={{fontSize:'10px',letterSpacing:'0.06em',textTransform:'uppercase',color:nc(id),fontWeight:tab===id?700:400,transition:'color 0.2s ease'}}>{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showPrem  && <PremiumModal th={th} hasTrial={hasTr} onClose={()=>setShowPrem(false)} onTrial={handleTrial} onBuy={handleBuy}/>}
+      {showRem   && <ReminderSheet th={th} reminder={data.reminder||{enabled:false,time:'08:00'}} onSave={r=>{update({...data,reminder:r});setShowRem(false);}} onClose={()=>setShowRem(false)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
