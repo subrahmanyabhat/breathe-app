@@ -435,7 +435,7 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
     </div>
 
     {/* Scroll */}
-    <div className="scroll-area" style={{flex:1,paddingBottom:'140px'}}>
+    <div className="scroll-area" style={{flex:1,paddingBottom:'16px'}}>
 
       {/* BANKED SCREENTIME hero */}
       <div style={{padding:'16px 20px 18px'}}>
@@ -578,8 +578,8 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
       </div>
     </div>
 
-    {/* Sticky begin session */}
-    <div style={{position:'absolute',bottom:0,left:0,right:0,maxWidth:'430px',margin:'0 auto',padding:'10px 16px 30px',background:`linear-gradient(to top,${th.bg} 65%,transparent)`}}>
+    {/* Fixed bottom bar */}
+    <div style={{flexShrink:0,padding:'10px 16px 20px',borderTop:`1px solid ${th.border}`,background:th.bg}}>
       <button className="btn-p" onClick={()=>onPick(selTech,null)} style={{width:'100%',background:th.btnBg,border:`1px solid ${th.id==='dark'?'rgba(255,255,255,0.13)':'rgba(30,90,220,0.2)'}`,borderRadius:'15px',padding:'18px 20px 14px',cursor:'pointer',textAlign:'center',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)'}}>
         <p style={{color:'#fff',fontSize:'16px',fontWeight:600,marginBottom:'4px',letterSpacing:'-0.01em'}}>begin session</p>
         <p style={{color:'rgba(255,255,255,0.50)',fontSize:'11px',letterSpacing:'0.03em',fontFamily:"'DM Mono',monospace"}}>
