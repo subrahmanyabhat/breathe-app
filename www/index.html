@@ -521,7 +521,7 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
     </div>
 
     {/* Scroll */}
-    <div className="scroll-area" style={{flex:1,paddingBottom:'16px'}}>
+    <div className="scroll-area" style={{flex:1,paddingBottom:'16px',display:'flex',flexDirection:'column',gap:'4px'}}>
 
       {/* BANKED SCREENTIME hero */}
       <div style={{padding:'16px 20px 18px'}}>
@@ -734,7 +734,7 @@ function StatsScreen({th,data}){
       </div>
 
       {/* Today's timeline — same card as home */}
-      <div style={{marginBottom:'14px',background:th.surf,border:`1px solid ${th.border}`,borderRadius:'13px',padding:'13px 15px',boxShadow:th.cardShadow}}>
+      <div style={{marginBottom:'18px',background:th.surf,border:`1px solid ${th.border}`,borderRadius:'13px',padding:'13px 15px',boxShadow:th.cardShadow}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
           <p style={{color:th.text,fontSize:'13px'}}>today's mindful minutes</p>
           <p style={{fontSize:'13px'}}><span style={{color:th.teal,fontWeight:600}}>{todayCount}</span><span style={{color:th.label}}>/10</span></p>
