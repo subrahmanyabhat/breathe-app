@@ -995,8 +995,8 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
                 <span style={{color:th.text,fontSize:'14px',fontWeight:700,minWidth:'32px',textAlign:'center'}}>{lim}m</span>
                 <button onClick={()=>adjustLimit(app.id,+1)} style={{width:'26px',height:'26px',borderRadius:'50%',background:th.surf,border:`1px solid ${th.border}`,color:th.text,fontSize:'15px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
               </div>
-              <button onClick={()=>setApplyTarget({app,limit:lim})} className="btn-p" style={{marginLeft:'auto',background:`${th.teal}18`,border:`1px solid ${th.teal}50`,borderRadius:'10px',padding:'6px 12px',color:th.teal,fontSize:'12px',fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>
-                Apply to iPhone →
+              <button onClick={openScreenTimeSettings} className="btn-p" style={{marginLeft:'auto',background:`${th.teal}18`,border:`1px solid ${th.teal}50`,borderRadius:'10px',padding:'6px 12px',color:th.teal,fontSize:'12px',fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>
+                ⚙ Apply to iPhone →
               </button>
             </div>
             <div style={{padding:'11px 15px',borderTop:`1px solid ${th.border}`}}>
