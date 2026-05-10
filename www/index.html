@@ -146,25 +146,64 @@ function Toggle({on,onToggle,th}){
 }
 
 // ── PremiumModal ──────────────────────────────────────────────────────────────
+const COMPARISON=[
+  ['All breathing techniques',     true, true],
+  ['Session tracking & streaks',   true, true],
+  ['Basic stats',                  true, true],
+  ['Block Instagram / TikTok',     false,true],
+  ['Earn screentime by breathing', false,true],
+  ['1 min = 10 min screen time',   false,true],
+  ['Daily alarm reminders',        false,true],
+  ['Year in review analytics',     false,true],
+];
 function PremiumModal({th,hasTrial,onClose,onTrial,onBuy}){
   return<div style={{position:'fixed',inset:0,background:th.overlay,display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:900,animation:'overlayIn 0.22s ease'}} onClick={onClose}>
-    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'430px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'28px 28px 0 0',padding:'32px 24px 48px',animation:'slideUp 0.36s cubic-bezier(0.4,0,0.2,1)',border:`1px solid ${th.border}`,borderBottom:'none'}}>
-      <div style={{width:'40px',height:'4px',borderRadius:'2px',background:th.text4,margin:'0 auto 28px'}}/>
-      <div style={{textAlign:'center',marginBottom:'22px'}}>
-        <div style={{width:'56px',height:'56px',borderRadius:'18px',margin:'0 auto 14px',background:'linear-gradient(135deg,#a48ee8,#5ec4e0)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'24px',boxShadow:'0 8px 28px rgba(164,142,232,0.4)'}}>✦</div>
-        <h2 style={{color:th.text,fontSize:'22px',fontWeight:700,letterSpacing:'-0.025em',marginBottom:'8px'}}>unlock premium</h2>
-        <p style={{color:th.text2,fontSize:'14px',lineHeight:1.55}}>breathe your way to more time.<br/>block apps. earn screentime back.</p>
+    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'430px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'28px 28px 0 0',padding:'24px 24px 0',animation:'slideUp 0.36s cubic-bezier(0.4,0,0.2,1)',border:`1px solid ${th.border}`,borderBottom:'none',maxHeight:'90vh',overflowY:'auto'}}>
+      <div style={{width:'40px',height:'4px',borderRadius:'2px',background:th.text4,margin:'0 auto 20px'}}/>
+      <div style={{textAlign:'center',marginBottom:'18px'}}>
+        <div style={{width:'52px',height:'52px',borderRadius:'16px',margin:'0 auto 12px',background:'rgba(164,142,232,0.22)',border:'1px solid rgba(164,142,232,0.4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px'}}>✦</div>
+        <h2 style={{color:th.text,fontSize:'22px',fontWeight:700,letterSpacing:'-0.025em',marginBottom:'6px'}}>Breathe Premium</h2>
+        <p style={{color:th.text2,fontSize:'13px',lineHeight:1.55}}>Block distracting apps. Earn screentime back by breathing.</p>
       </div>
-      <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'22px'}}>
-        {[['⏱','1 min breathing = 10 min screentime'],['🔒','block instagram, tiktok, youtube, x'],['🔔','daily reminders & streak protection'],['📊','session analytics']].map(([ic,tx],i)=>(
-          <div key={i} style={{display:'flex',alignItems:'center',gap:'12px',background:th.text4,border:`1px solid ${th.border}`,borderRadius:'12px',padding:'12px 14px'}}>
-            <span style={{fontSize:'16px',flexShrink:0}}>{ic}</span><p style={{color:th.text,fontSize:'13px'}}>{tx}</p>
+
+      {/* Comparison table */}
+      <div style={{background:th.text4,border:`1px solid ${th.border}`,borderRadius:'13px',overflow:'hidden',marginBottom:'16px'}}>
+        <div style={{display:'flex',padding:'9px 14px',borderBottom:`1px solid ${th.border}`,background:th.surf}}>
+          <p style={{flex:2,color:th.label,fontSize:'10px',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase'}}>Feature</p>
+          <p style={{flex:1,color:th.label,fontSize:'10px',fontWeight:600,textAlign:'center',textTransform:'uppercase'}}>Free</p>
+          <p style={{flex:1,color:'rgba(164,142,232,0.8)',fontSize:'10px',fontWeight:600,textAlign:'center',textTransform:'uppercase'}}>Premium</p>
+        </div>
+        {COMPARISON.map(([label,free,prem],i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',padding:'9px 14px',borderBottom:i<COMPARISON.length-1?`1px solid ${th.border}`:'none'}}>
+            <p style={{flex:2,color:th.text,fontSize:'13px'}}>{label}</p>
+            <p style={{flex:1,textAlign:'center',fontSize:'14px',fontWeight:700,color:free?'#4fcdd8':'rgba(255,255,255,0.18)'}}>{free?'✓':'✕'}</p>
+            <p style={{flex:1,textAlign:'center',fontSize:'14px',fontWeight:700,color:'#a48ee8'}}>{prem?'✓':'✕'}</p>
           </div>
         ))}
       </div>
-      {!hasTrial&&<button className="btn-p" onClick={onTrial} style={{width:'100%',background:'linear-gradient(135deg,#a48ee8,#5ec4e0)',border:'none',borderRadius:'14px',padding:'16px',color:'#fff',fontSize:'16px',fontWeight:700,marginBottom:'10px',boxShadow:'0 6px 24px rgba(164,142,232,0.4)'}}>start 7-day free trial</button>}
-      <button className="btn-p" onClick={onBuy} style={{width:'100%',background:hasTrial?'linear-gradient(135deg,#a48ee8,#5ec4e0)':th.text4,border:hasTrial?'none':`1px solid ${th.border}`,borderRadius:'14px',padding:'15px',color:hasTrial?'#fff':th.text2,fontSize:'15px',fontWeight:600,marginBottom:'12px',boxShadow:hasTrial?'0 6px 24px rgba(164,142,232,0.4)':'none'}}>{hasTrial?'upgrade — $4.99/mo':'$4.99/month  ·  $29.99/year'}</button>
-      <p style={{color:th.label,fontSize:'11px',textAlign:'center'}}>cancel anytime · no ads</p>
+
+      {/* Pricing card */}
+      <div style={{background:'rgba(164,142,232,0.10)',border:'1px solid rgba(164,142,232,0.22)',borderRadius:'14px',padding:'16px',marginBottom:'14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <p style={{color:'rgba(164,142,232,0.7)',fontSize:'10px',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:'4px'}}>Monthly Plan</p>
+          <p style={{color:'#fff',fontSize:'28px',fontWeight:700,letterSpacing:'-0.03em'}}>₹99<span style={{fontSize:'14px',color:'rgba(255,255,255,0.45)',fontWeight:400}}>/month</span></p>
+        </div>
+        <button className="btn-p" onClick={onBuy} style={{background:'rgba(164,142,232,0.25)',border:'1px solid rgba(164,142,232,0.4)',borderRadius:'12px',padding:'10px 18px',color:'#a48ee8',fontSize:'14px',fontWeight:700,cursor:'pointer'}}>
+          {hasTrial?'Buy Now':'Subscribe'}
+        </button>
+      </div>
+
+      {/* Trial CTA */}
+      {!hasTrial
+        ?<button className="btn-p" onClick={onTrial} style={{width:'100%',background:'linear-gradient(135deg,#a48ee8,#5ec4e0)',border:'none',borderRadius:'14px',padding:'16px',color:'#fff',fontSize:'16px',fontWeight:700,marginBottom:'10px',boxShadow:'0 6px 24px rgba(164,142,232,0.4)',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',cursor:'pointer'}}>
+            <span>🎁 Start 7-Day Free Trial</span>
+            <span style={{fontSize:'11px',opacity:0.65,fontWeight:400}}>Then ₹99/month · cancel anytime</span>
+          </button>
+        :<div style={{background:'rgba(79,205,216,0.10)',border:'1px solid rgba(79,205,216,0.25)',borderRadius:'12px',padding:'12px',textAlign:'center',marginBottom:'10px'}}>
+          <p style={{color:'#4fcdd8',fontSize:'13px',fontWeight:500}}>✓ Free trial active — upgrade to keep access</p>
+        </div>
+      }
+      <p style={{color:th.label,fontSize:'11px',textAlign:'center',paddingBottom:'28px'}}>cancel anytime · no ads · secure payment</p>
     </div>
   </div>;
 }
