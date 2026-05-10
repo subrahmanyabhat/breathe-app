@@ -178,7 +178,8 @@ function ReminderSheet({th,reminder,onSave,onClose}){
     <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'430px',background:th.id==='dark'?'#0d1b36':'#fff',borderRadius:'28px 28px 0 0',padding:'28px 24px 48px',animation:'slideUp 0.36s cubic-bezier(0.4,0,0.2,1)',border:`1px solid ${th.border}`,borderBottom:'none'}}>
       <div style={{width:'40px',height:'4px',borderRadius:'2px',background:th.text4,margin:'0 auto 24px'}}/>
       <h3 style={{color:th.text,fontSize:'19px',fontWeight:700,marginBottom:'6px'}}>daily reminder</h3>
-      <p style={{color:th.text2,fontSize:'13px',marginBottom:'20px'}}>get notified each day to breathe.</p>
+      <p style={{color:th.text2,fontSize:'13px',marginBottom:'6px'}}>Fires as a daily notification at the set time.</p>
+      <p style={{color:th.label,fontSize:'12px',marginBottom:'18px'}}>On iPhone — use the native app for a reliable alarm. On desktop, keep this tab open for web notifications.</p>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:th.text4,border:`1px solid ${th.border}`,borderRadius:'12px',padding:'14px 16px',marginBottom:'10px'}}>
         <div><p style={{color:th.text,fontSize:'14px',fontWeight:500}}>enable reminder</p><p style={{color:th.text2,fontSize:'12px'}}>requires notification permission</p></div>
         <Toggle on={on} onToggle={()=>setOn(x=>!x)} th={th}/>
@@ -187,7 +188,8 @@ function ReminderSheet({th,reminder,onSave,onClose}){
         <p style={{color:th.text,fontSize:'14px',fontWeight:500}}>time</p>
         <input type="time" value={t} onChange={e=>setTime(e.target.value)} disabled={!on} style={{background:'none',border:'none',color:th.teal,fontSize:'16px',fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}/>
       </div>
-      <button className="btn-p" onClick={save} style={{width:'100%',background:th.teal,color:'#07111e',border:'none',borderRadius:'12px',padding:'15px',fontSize:'15px',fontWeight:700}}>save</button>
+      <button className="btn-p" onClick={save} style={{width:'100%',background:th.teal,color:'#07111e',border:'none',borderRadius:'12px',padding:'15px',fontSize:'15px',fontWeight:700,marginBottom:'10px'}}>{on?`Set alarm for ${t}`:'save (off)'}</button>
+      <button className="btn-s" onClick={()=>window.open('x-apple-reminder://','_blank')} style={{width:'100%',background:th.text4,border:`1px solid ${th.border}`,borderRadius:'12px',padding:'12px',fontSize:'13px',color:th.text2,cursor:'pointer'}}>Open Reminders App →</button>
     </div>
   </div>;
 }
