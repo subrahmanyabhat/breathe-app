@@ -346,6 +346,50 @@ function LearnInline({th,onStartPractice}){
   </div>;
 }
 
+// ── SelectAppsSheet ───────────────────────────────────────────────────────────
+function SelectAppsSheet({th,data,onUpdate,onClose}){
+  const en=data.appEnabled||{};
+  const toggle=id=>{
+    const next={...en,[id]:!en[id]};
+    onUpdate({...data,appEnabled:next});
+  };
+  const APP_DESCS={instagram:'Social photos & reels',tiktok:'Short-form video',youtube:'Video streaming',twitter:'News & social'};
+  return(
+    <div style={{position:'fixed',inset:0,background:th.overlay,display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:800,animation:'overlayIn 0.22s ease'}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:'430px',background:th.id==='dark'?'#0d1b36':th.surf2,borderRadius:'28px 28px 0 0',padding:'24px 24px 44px',animation:'slideUp 0.36s cubic-bezier(0.4,0,0.2,1)',border:`1px solid ${th.border}`,borderBottom:'none'}}>
+        <div style={{width:'40px',height:'4px',borderRadius:'2px',background:th.text4,margin:'0 auto 20px'}}/>
+        <h3 style={{color:th.text,fontSize:'19px',fontWeight:700,marginBottom:'4px'}}>Select Apps to Block</h3>
+        <p style={{color:th.text2,fontSize:'13px',marginBottom:'20px'}}>Selected apps appear in your Blocked Apps card. Breathe to earn them back.</p>
+
+        <div style={{display:'flex',flexDirection:'column',gap:'10px',marginBottom:'24px'}}>
+          {APPS.map(app=>{
+            const on=!!en[app.id];
+            return(
+              <div key={app.id} onClick={()=>toggle(app.id)} style={{display:'flex',alignItems:'center',gap:'14px',background:on?`${app.color}18`:th.text4,border:`1px solid ${on?app.color+'55':th.border}`,borderRadius:'14px',padding:'14px 16px',cursor:'pointer',transition:'all 0.18s ease'}}>
+                <div style={{width:'42px',height:'42px',borderRadius:'11px',background:app.color,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <span style={{color:'rgba(255,255,255,0.92)',fontSize:'13px',fontWeight:700}}>{app.initials}</span>
+                </div>
+                <div style={{flex:1}}>
+                  <p style={{color:th.text,fontSize:'15px',fontWeight:600,marginBottom:'2px'}}>{app.name}</p>
+                  <p style={{color:th.text2,fontSize:'12px'}}>{APP_DESCS[app.id]}</p>
+                </div>
+                {/* Custom toggle */}
+                <div style={{width:'44px',height:'26px',borderRadius:'13px',background:on?th.teal:th.toggleTrack,position:'relative',flexShrink:0,transition:'background 0.25s ease'}}>
+                  <div style={{position:'absolute',top:'3px',left:on?'21px':'3px',width:'20px',height:'20px',borderRadius:'50%',background:'#fff',transition:'left 0.25s cubic-bezier(0.34,1.3,0.64,1)',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{display:'flex',gap:'10px'}}>
+          <button onClick={onClose} style={{flex:1,background:th.text4,border:`1px solid ${th.border}`,borderRadius:'14px',padding:'15px',color:th.text2,fontSize:'15px',fontWeight:600,cursor:'pointer'}}>Done</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── BreatheToUnlock sheet ─────────────────────────────────────────────────────
 function BreatheToUnlockSheet({th,app,selTech,onSelTech,onStartSession,onClose}){
   const cycleSeconds=selTech.phases.reduce((s,p)=>s+p.d,0);
@@ -400,8 +444,9 @@ function BreatheToUnlockSheet({th,app,selTech,onSelTech,onStartSession,onClose})
 // ── HomeScreen ────────────────────────────────────────────────────────────────
 const TL_START=6,TL_END=22,TL_SLOTS=TL_END-TL_START;
 
-function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,theme,isPrem,selTech,onSelTech}){
+function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,theme,isPrem,selTech,onSelTech,onUpdate}){
   const[lockTarget,setLockTarget]=useState(null);
+  const[showSelectApps,setShowSelectApps]=useState(false);
   const[btab,setBtab]=useState('practice'); // 'practice' | 'learn'
   const streak=calcStreak(data.sessions);
   const today=todayStr();
@@ -488,7 +533,7 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
           {/* Blocked Apps label + Manage */}
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
             <p style={{color:'rgba(255,255,255,0.50)',fontSize:'13px',fontWeight:500}}>Blocked Apps</p>
-            <button onClick={()=>!isPrem?onGate():openScreenTimeSettings()} style={{background:'none',border:'none',color:'#4a90d9',fontSize:'13px',fontWeight:600,cursor:'pointer',padding:0}}>Manage →</button>
+            <button onClick={()=>!isPrem?onGate():setShowSelectApps(true)} style={{background:'none',border:'none',color:'#4a90d9',fontSize:'13px',fontWeight:600,cursor:'pointer',padding:0}}>Manage →</button>
           </div>
 
           {/* Horizontal pill scroll — fixed height, no wrapping */}
@@ -520,6 +565,7 @@ function HomeScreen({th,data,onPick,onGate,onReminder,sound,onSound,onTheme,them
           </button>
         </div>
         {lockTarget&&<BreatheToUnlockSheet th={th} app={lockTarget} selTech={selTech} onSelTech={onSelTech} onStartSession={handleBreatheForApp} onClose={()=>setLockTarget(null)}/>}
+        {showSelectApps&&<SelectAppsSheet th={th} data={data} onUpdate={onUpdate} onClose={()=>setShowSelectApps(false)}/>}
       </div>
 
       {/* BREATHING section */}
@@ -926,7 +972,8 @@ function ApplyLimitSheet({th,app,limit,onClose}){
 
 // ── ScreentimeScreen ──────────────────────────────────────────────────────────
 function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
-  const[applyTarget,setApplyTarget]=useState(null); // {app,limit}
+  const[applyTarget,setApplyTarget]=useState(null);
+  const[showSelectApps,setShowSelectApps]=useState(false);
   const earned=data.earnedMin||0;
   const appEnabled=data.appEnabled||{instagram:true,tiktok:true,youtube:false,twitter:false};
   const appLimits=data.appLimits||{instagram:30,tiktok:30,youtube:60,twitter:30};
@@ -969,7 +1016,10 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
         </div>
       </div>
 
-      <p style={{color:th.label,fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',fontWeight:500,marginBottom:'10px'}}>APP BLOCKING</p>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
+        <p style={{color:th.label,fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',fontWeight:500}}>APP BLOCKING</p>
+        <button onClick={()=>setShowSelectApps(true)} style={{background:`${th.teal}18`,border:`1px solid ${th.teal}44`,borderRadius:'8px',padding:'4px 10px',color:th.teal,fontSize:'11px',fontWeight:600,cursor:'pointer'}}>+ Select Apps</button>
+      </div>
 
       {APPS.map((app,i)=>{
         const on=!!appEnabled[app.id];
@@ -1021,6 +1071,7 @@ function ScreentimeScreen({th,data,isPrem,onGate,onUpdate}){
     </div>
   </div>
   {applyTarget&&<ApplyLimitSheet th={th} app={applyTarget.app} limit={applyTarget.limit} onClose={()=>setApplyTarget(null)}/>}
+  {showSelectApps&&<SelectAppsSheet th={th} data={data} onUpdate={onUpdate} onClose={()=>setShowSelectApps(false)}/>}
   </>;
 }
 
@@ -1224,7 +1275,7 @@ function App(){
       {tech?(
         <SessionScreen th={th} tech={tech} onDone={handleDone} onBack={()=>setTech(null)} sound={sound}/>
       ):tab==='home'?(
-        <HomeScreen th={th} data={data} onPick={handlePickTech} onGate={handleGate} onReminder={()=>setShowRem(true)} sound={sound} onSound={()=>setSound(s=>!s)} onTheme={toggleTheme} theme={theme} isPrem={isPrem} selTech={selTech} onSelTech={setSelTech}/>
+        <HomeScreen th={th} data={data} onUpdate={update} onPick={handlePickTech} onGate={handleGate} onReminder={()=>setShowRem(true)} sound={sound} onSound={()=>setSound(s=>!s)} onTheme={toggleTheme} theme={theme} isPrem={isPrem} selTech={selTech} onSelTech={setSelTech}/>
       ):tab==='stats'?(
         <StatsScreen th={th} data={data}/>
       ):(
